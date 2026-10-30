@@ -1,0 +1,38 @@
+# Reverse-Mode Automatic Differentiation Compiler
+
+A small compiler, written in Rust, that takes a program in a tiny numeric language and produces a new program computing both the original function and its gradient, using reverse-mode automatic differentiation (AD).
+
+## Project Idea
+
+**Language:** A small first-order (or simple higher-order) numeric language with `+`, `*`, `exp`, `log`, `if`, and bounded loops.
+
+**Tool:** Compiler. It transforms a program `f` into a program computing `f` and its gradient.
+
+**Input/output:** Source program in, gradient-computing program out (or interpreted/compiled to a simple IR).
+
+**Guarantee:** Correctness of the AD transformation, checked against numerical finite differences and sketched as a proof (in the style of "Backpropagation in the Simply Typed Lambda-Calculus with Linear Negation").
+
+**Reach goals:** Optimizations such as common-subexpression elimination on the tape, checkpointing, or forward-mode vs reverse-mode selection.
+
+**Related work:**
+- Baydin et al., ["Automatic Differentiation in Machine Learning: A Survey"](https://jmlr.org/papers/v18/17-468.html) (JMLR, 2018)
+- Elliott, ["The Simple Essence of Automatic Differentiation"](https://arxiv.org/abs/1804.00746) (ICFP, 2018)
+- Brunel, Mazza, Pagani, ["Backpropagation in the Simply Typed Lambda-Calculus with Linear Negation"](https://arxiv.org/abs/1909.13768) (POPL, 2020)
+- Wang et al., ["Demystifying Differentiable Programming: Shift/Reset the Penultimate Backpropagator"](https://arxiv.org/abs/1803.10228) (ICFP, 2019)
+- Existing tools: Zygote, Enzyme
+
+## Purpose of the Project
+
+### The problem it addresses
+
+Training machine learning models means minimizing a loss function, and that needs the **gradient**: how much the output changes for each small change in each input or parameter. Computing gradients by hand is error-prone and doesn't scale. Numerical approximation (finite differences) is slow and inexact, and symbolic differentiation can blow up in size.
+
+**Automatic differentiation (AD)** solves this by transforming the program itself so it computes its own derivative exactly. Reverse-mode AD is the version behind backpropagation, and it is what PyTorch, JAX, and TensorFlow rely on. The purpose of this project is to build a small, correct version of that machinery.
+
+### What it is meant to do
+
+Build a compiler that takes a program `f` in a tiny numeric language and outputs a new program computing both `f(x)` and `∇f(x)`. The goal is to show we can do this systematically and provably correctly, not just make it work on a few examples.
+
+### What a successful result looks like
+
+At the end we can demo the following: write a small function in our language, compile it, and get a program that outputs the correct gradient. The gradient then drives something like gradient descent on a tiny model. We can also point to our semantics and proof sketch as the reason to trust it.
