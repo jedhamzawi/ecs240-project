@@ -1,0 +1,140 @@
+%%%%%%%%%%%%%%%%%
+% Configuration %
+%%%%%%%%%%%%%%%%%
+
+% Spec: 2-5 pages (excluding references). Do not change font, margins, or spacing.
+\documentclass[12pt, letterpaper]{article}
+\usepackage{xurl}
+\usepackage[super,comma,sort&compress]{natbib}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{listings}
+\lstset{basicstyle=\ttfamily\small, columns=fullflexible}
+\usepackage{lipsum}
+
+% Any configuration that should be done before the end of the preamble:
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, urlcolor=blue, linkcolor=blue, citecolor=blue}
+
+\renewcommand{\refname}{References Cited}
+
+\title{ECS 240 Project Proposal}
+\author{Rajiv Choudhury, Jacob Hamzawi, Rishika Nigam, Gurpreet Singh}
+
+\begin{document}
+
+\maketitle
+
+%%%%%%%%%%%
+% Article %
+%%%%%%%%%%%
+
+\section{Introduction and Motivation}
+
+\subsection{Problem Domain and Motivation}
+% TODO: Application domain; what problem(s) we solve and why it's interesting.
+% At least 3 citations, at least 2 of them research papers.
+
+\lipsum[1]
+
+\subsection{Proposed Language}
+% TODO: Own toy language, or a subset of an existing one? What it contains/does,
+% or which keywords/features we focus on. Include example syntax.
+
+\subsection{Proposed Tool}
+% TODO: Basic interpreter + one of: compiler, static analysis, dynamic analysis,
+% type system. What are the inputs/outputs? How does a user interact with it?
+
+\subsection{Scope and Related Work}
+% TODO: Is this already solved/built? What existing tools solve similar problems?
+
+\section{Goals}
+% TODO: High level; details go in later sections.
+
+\paragraph{Minimum goal.}
+% Must have working by end of quarter.
+
+\paragraph{Target goal.}
+% Plan to have working by end of quarter.
+
+\paragraph{Reach goal.}
+% Extra features if time allows; nothing on the critical path.
+
+\section{Syntax and Semantics}
+% TODO: Example syntax, draft formal grammar, and at most a paragraph sketching
+% the semantics (set of (INPUT, prog, OUTPUT) triples).
+
+\begin{lstlisting}
+example program goes here
+\end{lstlisting}
+
+\begin{align*}
+  e &::= n \mid x \mid e_1 + e_2 \\
+  c &::= x := e \mid c_1; c_2
+\end{align*}
+
+\section{Implementation Plan}
+
+\subsection{Tool and Language Selection}
+% TODO: What tools and languages will we use to build the project?
+
+\subsection{Incorporating Existing Tools}
+% TODO: From scratch, or using existing software/code bases? Justify each one.
+
+\subsection{Architecture}
+% TODO: Components and how they interact. Consider a diagram (can be tentative).
+
+% \begin{figure}[h]
+%   \centering
+%   \includegraphics[width=\linewidth]{architecture.pdf}
+%   \caption{Tool architecture.}
+%   \label{fig:architecture}
+% \end{figure}
+
+\subsection{Development Effort}
+% TODO: Functions/components/modules to build (refer to architecture).
+% What is explicitly out of scope?
+
+\subsection{Challenges}
+% TODO: What could go wrong? What's the fallback if a step gets difficult?
+
+\section{Collaboration Plan}
+% TODO: How are components divided among members? Meeting plan (suggested
+% 2x/week) and communication platform.
+
+\paragraph{Timeline.}
+% Expected weekly timeline of which components are developed when.
+
+\begin{tabular}{ll}
+  \textbf{Week} & \textbf{Components} \\
+  \hline
+  Week 1 & \\
+  Week 2 & \\
+\end{tabular}
+
+\paragraph{Commitment statement.}
+
+% TODO: uncomment when each person agrees
+% \begin{itemize}
+%   \item I commit to work and contribute equally to this project. --- \emph{Rajiv Choudhury}
+%   \item I commit to work and contribute equally to this project. --- \emph{Jacob Hamzawi}
+%   \item I commit to work and contribute equally to this project. --- \emph{Rishika Nigam}
+%   \item I commit to work and contribute equally to this project. --- \emph{Gurpreet Singh}
+% \end{itemize}
+
+\section{Conclusion and Questions for Feedback}
+% TODO: 1-2 paragraphs. What happens if successful, why it's exciting/important.
+% What are we uncertain about / want feedback on?
+
+%%%%%%%%%%%%%%
+% References %
+%%%%%%%%%%%%%%
+
+\bibliographystyle{unsrtnat}
+\bibliography{references}
+
+% Material beyond the 5-page limit goes here (may or may not be graded):
+% \appendix
+% \section{...}
+
+\end{document}
