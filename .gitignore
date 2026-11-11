@@ -1,0 +1,8 @@
+# VSCode settings
+.vscode/*
+# leave a template settings file
+!.vscode/settings.default.json
+
+# LaTeX artifacts
+build/
+*.synctex.gz
