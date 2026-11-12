@@ -10,7 +10,9 @@
 \usepackage{graphicx}
 \usepackage{listings}
 \lstset{basicstyle=\ttfamily\small, columns=fullflexible}
-\usepackage{lipsum}
+% Typewriter braces: \texttt{\{} has no glyph in the default OT1/OMS encoding.
+\newcommand{\ttlbrace}{\texttt{\char`\{}}
+\newcommand{\ttrbrace}{\texttt{\char`\}}}
 
 % Any configuration that should be done before the end of the preamble:
 \usepackage{hyperref}
@@ -56,7 +58,7 @@ The language designers eventually opted to remove \texttt{io} keyword and the pu
 %TODO: make sure we define side effects before using it here
 We hope to discover while designing and analyzing our own language what explicit declaration of side effects could enable for language users and whether the Rust developers' decision was ultimately justified.
 
-\begin{verbatim}
+\begin{lstlisting}
 fn pure_function(x, y) {
     x + y
 }
@@ -87,7 +89,7 @@ fn impure main() {
 	  // mutated: z
 	  impure_function(x, y);
 }
-\end{verbatim}
+\end{lstlisting}
 
 \subsection{Proposed Tool}
 % TODO: Basic interpreter + one of: compiler, static analysis, dynamic analysis,
@@ -133,15 +135,88 @@ Specifically for file I/O, we could explore options to avoid Rust's issue of \te
 % TODO: Example syntax, draft formal grammar, and at most a paragraph sketching
 % the semantics (set of (INPUT, prog, OUTPUT) triples).
 
+\paragraph{Syntax.} The syntax of our language can be described by the following example and the subsequent draft formal grammar:
+
+\bigskip
+
 \begin{lstlisting}
-example program goes here
+fn pure_function(x, y) {
+    x + y
+}
+
+// global variable
+var z;
+
+// You must specify the data out of scope whose
+// state may change
+fn impure(z) impure_function(x, y) {
+    z = x + y;
+}
+
+// If variables have fields, those fields
+// must be declared
+fn impure(x.value, y.value) impure_function_struct(x, y) {
+    // mutates x
+    x.value = 1;
+    y.value = 1;
+}
+
+// Data reached through a reference is out of scope,
+// so writing through it must be declared
+fn impure(*r) increment(&r) {
+    *r = *r + 1;
+}
+
+// You can look at the program see a full list
+// of all the things that could change state
+fn impure main() {
+    var x = 1;
+    var y = 2;
+    x = pure_function(x, y);
+    // mutated: z
+    impure_function(x, y);
+    // mutated: x (through the reference)
+    increment(&x);
+}
 \end{lstlisting}
 
-% TODO:
+Start symbol $P$ (program).
+Metavariables: $n$ ranges over integer literals $0$--$255$, $x, f, \ell$ range over identifiers (letters, digits, and underscores, beginning with a letter) applying to variable, function, and field names respectively.
+
 \begin{align*}
-  e &::= n \mid x \mid e_1 + e_2 \\
-  c &::= x := e \mid c_1; c_2
+  P &::= D \mid D\ P \\
+  D &::= \texttt{var}\ x\texttt{;}
+     \mid \texttt{fn}\ a\ f\texttt{(}q_1, \dots, q_k\texttt{)}\ \ttlbrace\ B\ \ttrbrace \\
+  q &::= x \mid \texttt{\&}x \\
+  a &::= \epsilon
+     \mid \texttt{impure}
+     \mid \texttt{impure(}p_1, \dots, p_m\texttt{)} \\
+  B &::= s_1 \dots s_j \mid s_1 \dots s_j\ e \\
+  s &::= \texttt{var}\ x\texttt{;}
+     \mid \texttt{var}\ x \texttt{ = } e\texttt{;}
+     \mid p \texttt{ = } e\texttt{;}
+     \mid f\texttt{(}e_1, \dots, e_k\texttt{)}\texttt{;} \\
+  p &::= x \mid p\texttt{.}\ell \mid \texttt{*}p \\
+  e &::= n \mid p \mid \texttt{\&}p \mid e_1 \oplus e_2 \mid \texttt{(}e\texttt{)}
+     \mid f\texttt{(}e_1, \dots, e_k\texttt{)} \\
+  \oplus &::= \texttt{+} \mid \texttt{-} \mid \texttt{*} \mid \texttt{/}
 \end{align*}
+
+\noindent where $k, m, j \geq 0$.
+A place $p$ names a location that can be read, assigned, or declared in an \texttt{impure} clause: a variable, a field of a place, or the target of a reference.
+\texttt{\&}$p$ creates a reference to $p$; all references are mutable (Rust's \texttt{\&mut}) but are written \texttt{\&}.
+Function signatures show which arguments are passed by reference with an explicit symbol \texttt{\&}$x$. 
+The grammar for $e$ is ambiguous as written: unary \texttt{*} and \texttt{\&} bind tightest, then \texttt{*} and \texttt{/}, then \texttt{+} and \texttt{-}, and all binary operators are left-associative.
+A trailing expression $e$ with no semicolon is the function's return value, as in Rust.
+
+\paragraph{Semantics.} The semantics of our language can be described as the set of \texttt{(INPUT, prog, OUTPUT)} triples produced by our reference interpreter, which serves as the oracle for the compiler: for every program, the emitted Rust must produce the same output.
+Programs take no input, so \texttt{INPUT} is always empty.
+This could change if we decide to investigate file I/O or read from stdin.
+As in Rust, a program that fails the purity check is rejected before it runs and so belongs to no triple.
+For every other program, \texttt{OUTPUT} is the final values of all global variables once \texttt{main} returns, or an error if execution faults (e.g., \texttt{u8} overflow or division by zero).
+Our language's purity check must guarantee that in any accepted program, a call to a function declared \texttt{impure(}$p_1, \dots, p_m$\texttt{)} changes only $p_1, \dots, p_m$, and a call to a pure function cannot change state outside its own scope.
+The interpreter can verify this by comparing state before and after each call, so any violation exposes a bug in the purity check itself.
+Should our purity check extend to system state (see \S2), its guarantees would extend along with it (e.g. no file is read or written unless explicitly declared, etc.).
 
 \section{Implementation Plan}
 
@@ -219,12 +294,12 @@ It may be contracted or expanded depending on our eventual project due date.
 \paragraph{Commitment statement.}
 
 % TODO: uncomment when each person agrees
-% \begin{itemize}
+\begin{itemize}
 %   \item I commit to work and contribute equally to this project. --- \emph{Rajiv Choudhury}
-%   \item I commit to work and contribute equally to this project. --- \emph{Jacob Hamzawi}
+  \item I commit to work and contribute equally to this project. --- \emph{Jacob Hamzawi}
 %   \item I commit to work and contribute equally to this project. --- \emph{Rishika Nigam}
 %   \item I commit to work and contribute equally to this project. --- \emph{Gurpreet Singh}
-% \end{itemize}
+\end{itemize}
 
 \section{Conclusion and Questions for Feedback}
 % TODO: 1-2 paragraphs. What happens if successful, why it's exciting/important.
@@ -245,7 +320,43 @@ That's more difficult but perhaps more compelling.
 \bibliography{references}
 
 % Material beyond the 5-page limit goes here (may or may not be graded):
-% \appendix
-% \section{...}
+% TODO: appendix
+\appendix
+\section{Complete Formal Grammar (In Progress)}
+
+\newcommand{\concat}{%
+  \mathbin{{+}\mspace{-8mu}{+}}%
+}
+
+\begin{align*}
+  S &::= \\
+  %expressions
+  \texttt{<Int>} &::= 0 \mid \texttt{<NonZeroInt>} \\
+  \texttt{<NonZeroInt>} &::= \texttt{<NonZeroDigit>} \mid \texttt{<NonZeroInt>} \concat \texttt{<Digit>} \\
+  \texttt{<NonZeroDigit>} &::= 1 \mid 2 \mid 3 \mid 4 \mid 5 \mid 6 \mid 7 \mid 8 \mid 9 \\
+  \texttt{<Digit>} &::= 0 \mid \texttt{<NonZeroDigit>} \\
+  \texttt{<Exp>} &::= \texttt{<MultDivExp>} \mid \texttt{<Exp> <AddSubOp> <MultDivExp>}  \\
+  \texttt{<AddSubOp>} &::= + \mid - \\
+  \texttt{<MultDivExp>} &::= \texttt{<Factor>} \mid \texttt{<MultDivExp> <MultDivOp> <Factor>} \\
+  \texttt{<Factor>} &::= \texttt{<Int>} \mid \texttt{<Var>} \mid \texttt{(<Exp>)} \\
+  \texttt{<MultDivOp>} &::= * \mid / \\
+  %statements
+  \texttt{<Body>} &::= \texttt{<StmtList>} \mid \texttt{<Return>} \mid \texttt{<StmtList>} \concat \texttt{<Return>} \\
+  \texttt{<StmtList>} &::= \texttt{<Statement>} \mid \texttt{<StmtList>} \concat \texttt{<Statement>} \\
+  %TODO: statements: assignment, declaration, or function call
+  \texttt{<Statement>} &::= \texttt{<Declaration>;} \mid \texttt{<Assignment>;} \\
+  \texttt{<Declaration>} &::= \texttt{var <Var>} \mid \texttt{var <Var> = <Exp>} \\
+  \texttt{<Assignment>} &::= \texttt{<Var> = <Exp>} \\
+  \texttt{<Return>} &::= \texttt{<Exp>} \\
+  %TODO: function names?
+  \texttt{<Call>} &::= \texttt{<Var> = <Exp>} \\
+  %TODO: functions
+  \texttt{<Fn>} &::= \\
+  \texttt{<FnSig>} &::= \texttt{<Var>()} \\
+  %TODO: underscores; also function names are just variables names as far as I can tell
+  %TODO: variables, functions
+  \texttt{<Letter>} &::= [a-zA-Z] \\
+  \texttt{<Var>} &::= \texttt{<Letter>} \mid \texttt{<Var>} \concat \texttt{<Letter>} \mid \texttt{<Var>} \concat \texttt{<Digit>} \\
+\end{align*}
 
 \end{document}
