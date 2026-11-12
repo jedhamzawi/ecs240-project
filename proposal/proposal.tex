@@ -32,15 +32,21 @@
 \section{Introduction and Motivation}
 
 \subsection{Problem Domain and Motivation}
-% TODO: Application domain; what problem(s) we solve and why it's interesting.
-% At least 3 citations, at least 2 of them research papers.
-
-
-%TODO: tidy up
-Functional programming allows for greater modularity.\cite{hughes_why_1989}
-Side effects cause difficulty in reasoning about code; unclear when calling a function which components are modified.\cite{cousot_purity_2005}
-Yet effects are often absolutely necessary as with file I/O.
-Desire to break free from assignment and mutation \cite{backus_can_1978}
+A \emph{side effect} is a modification of state that outlives a function call,
+that is, state the function did not create itself.
+Side effects make code difficult to reason about: at a call site it is unclear
+which components a function may modify, so a reader must inspect the callee and
+everything it calls~\cite{cousot_purity_2005}.
+Functional programming avoids this problem and allows for greater
+modularity~\cite{hughes_why_1989}, and Backus argued for liberating programming
+from assignment and mutation altogether~\cite{backus_can_1978}.
+Yet effects are often necessary, as with file I/O.
+Haskell confines them to the monad~\cite{peyton_jones_imperative_1993}, and
+effect systems track them statically in types~\cite{lucassen_polymorphic_1988,talpin_type_1994}.
+Our domain is \emph{making side effects explicit in an imperative systems
+language}: every function is pure unless declared \texttt{impure}, an impure
+function must list the outside state it may modify, and the compiler checks the
+declaration.
 
 \subsection{Proposed Language}
 % TODO: Own toy language, or a subset of an existing one? What it contains/does,
