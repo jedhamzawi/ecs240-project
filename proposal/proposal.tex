@@ -35,30 +35,99 @@
 % TODO: Application domain; what problem(s) we solve and why it's interesting.
 % At least 3 citations, at least 2 of them research papers.
 
-\lipsum[1]
+
+%TODO: tidy up
+Functional programming allows for greater modularity.\cite{hughes_why_1989}
+Side effects cause difficulty in reasoning about code; unclear when calling a function which components are modified.\cite{cousot_purity_2005}
+Yet effects are often absolutely necessary as with file I/O.
+Desire to break free from assignment and mutation \cite{backus_can_1978}
 
 \subsection{Proposed Language}
 % TODO: Own toy language, or a subset of an existing one? What it contains/does,
 % or which keywords/features we focus on. Include example syntax.
 
+We propose a toy programming language similar to traditional systems programming languages like C and Rust with the distinction that every function is explicitly defined as "pure" or "impure", where a "pure" function may only modify state initialized in or moved into its scope.
+Our language will implement at least the minimum set of elements that allow us to illustrate this system, including variables, functions, references, and an 8-bit unsigned integer primitive as the sole type.
+%TODO: fix
+We may support other features such as structs, strings, or simple file I/O depending on our timeline (see \S\S~2~and~4).
+
+Rust itself originally sought such a design, defining all functions as "pure" by default and employing the \texttt{io} keyword to explicitly designate a function with I/O side effects.\cite{hoare2013pure}
+The language designers eventually opted to remove \texttt{io} keyword and the pure/impure separation.
+%TODO: make sure we define side effects before using it here
+We hope to discover while designing and analyzing our own language what explicit declaration of side effects could enable for language users and whether the Rust developers' decision was ultimately justified.
+
+\begin{verbatim}
+fn pure_function(x, y) {
+    x + y
+}
+
+// global variable
+var z;
+
+// You must specify the data out of scope whose
+// state may change
+fn impure(z) impure_function(x, y) {
+    z = x + y;
+}
+
+// If variables have fields, those fields
+// must be declared 
+fn impure(x.value, y.value) impure_function_struct(x, y) {
+    // mutates x
+    x.value = 1;
+    y.value = 1;
+}
+
+// You can look at the program see a full list
+// of all the things that could change state
+fn impure main() {
+    var x = 1;
+    var y = 2;
+    x = pure_function(x, y);
+	  // mutated: z
+	  impure_function(x, y);
+}
+\end{verbatim}
+
 \subsection{Proposed Tool}
 % TODO: Basic interpreter + one of: compiler, static analysis, dynamic analysis,
 % type system. What are the inputs/outputs? How does a user interact with it?
 
+compiler, where the input is a string in our source language and the output is a string in Rust.
+The user interacts with it from the command line
+As a stretch goal (see \S2), an analysis tool to glean information from impure declarations may be in scope.
+
 \subsection{Scope and Related Work}
 % TODO: Is this already solved/built? What existing tools solve similar problems?
+
+Haskell has the Monad \cite{peyton_jones_imperative_1993}
+Functional programming allows for greater modularity.\cite{hughes_why_1989}
+And they also often discourage side effects by the nature of their design.
+\texttt{cargo-scan} is a static analysis tool for Rust that detects side effects from Rust source code.\cite{zoghbi_auditing_2026}
 
 \section{Goals}
 % TODO: High level; details go in later sections.
 
+% I kinda discussed above; we want to learn how to track scope, detect impure functions, enumerate all possible mutations from a function, and in general, discover whether a pure/impure designation would be helpful in a systems programming language.
+
 \paragraph{Minimum goal.}
 % Must have working by end of quarter.
+
+Parser, interpreter, and working compiler.
+Interpreter and compiler must detect whether a function is pure or impure and error if a function is impure without declaring so along with the outside state it modifies.
 
 \paragraph{Target goal.}
 % Plan to have working by end of quarter.
 
+The above, along with a static analysis tool that enumerates all the possible state that is modified given a function (including the functions it itself calls).
+The tool will at least be a CLI, but could be extended to a VSCode extension as well.
+
 \paragraph{Reach goal.}
 % Extra features if time allows; nothing on the critical path.
+
+%TODO:
+The above, as well as other Rust features that might make the division harder and mitigation: system state (file I/O), structs, etc.?
+Specifically for file I/O, we could explore options to avoid Rust's issue of \texttt{io} keyword explosion (similar to Haskell's Monad).
 
 \section{Syntax and Semantics}
 % TODO: Example syntax, draft formal grammar, and at most a paragraph sketching
@@ -68,6 +137,7 @@
 example program goes here
 \end{lstlisting}
 
+% TODO:
 \begin{align*}
   e &::= n \mid x \mid e_1 + e_2 \\
   c &::= x := e \mid c_1; c_2
@@ -78,11 +148,17 @@ example program goes here
 \subsection{Tool and Language Selection}
 % TODO: What tools and languages will we use to build the project?
 
+Parser in Rust; meta language is Rust; target language for compiler is Rust.
+
 \subsection{Incorporating Existing Tools}
 % TODO: From scratch, or using existing software/code bases? Justify each one.
 
+From scratch.
+
 \subsection{Architecture}
 % TODO: Components and how they interact. Consider a diagram (can be tentative).
+
+Core language definition; parser that outputs core; interpreter reads core and executes; compiler reads core and outputs IR, in IR we do checks on purity, then IR to target Rust
 
 % \begin{figure}[h]
 %   \centering
@@ -98,18 +174,46 @@ example program goes here
 \subsection{Challenges}
 % TODO: What could go wrong? What's the fallback if a step gets difficult?
 
+% TODO:
+Tracking scope is hard; tool is too much work...
+Fallback..?
+What if a variable will \emph{never} change state? if we have if statements...should we detect that? need it be declared?
+
 \section{Collaboration Plan}
 % TODO: How are components divided among members? Meeting plan (suggested
 % 2x/week) and communication platform.
 
+% TODO:
+\paragraph{Division of Work.} Work divided as follows
+
+\bigskip
+
+\begin{tabular}{ll}
+  \textbf{Component} & \textbf{Group Member(s)} \\
+  \hline
+  Core & Jacob Hamzawi \\
+  Parser & ? \\
+  Interpreter & ? \\
+  Compiler & ? \\
+  Analysis tool & ? \\
+\end{tabular}
+
+\paragraph{Communication.}Slack and GitHub; Meetings after class on Monday and over Zoom on Thursday
+
 \paragraph{Timeline.}
 % Expected weekly timeline of which components are developed when.
 
+The below timeline assumes a 4-week time allotment to complete the project.
+It may be contracted or expanded depending on our eventual project due date.
+
+% TODO:
 \begin{tabular}{ll}
   \textbf{Week} & \textbf{Components} \\
   \hline
-  Week 1 & \\
-  Week 2 & \\
+  Week 1 & Parser \\
+  Week 2 & Interpreter + Compiler \\
+  Week 3 & Analysis tool + exploration \\
+  Week 4 & Presentation \\
 \end{tabular}
 
 \paragraph{Commitment statement.}
@@ -125,6 +229,13 @@ example program goes here
 \section{Conclusion and Questions for Feedback}
 % TODO: 1-2 paragraphs. What happens if successful, why it's exciting/important.
 % What are we uncertain about / want feedback on?
+
+%TODO:
+Re-state goal kinda: does explicit knowledge of impure functions change programming paradigm? Or something like that.
+
+Questions: are variables enough?
+Should we focus instead on system state?
+That's more difficult but perhaps more compelling.
 
 %%%%%%%%%%%%%%
 % References %
