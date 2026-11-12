@@ -4,5 +4,5 @@
 !.vscode/settings.default.json
 
 # LaTeX artifacts
-build/
+proposal/build/
 *.synctex.gz
