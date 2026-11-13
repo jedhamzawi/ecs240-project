@@ -98,12 +98,20 @@ fn impure main() {
 \end{lstlisting}
 
 \subsection{Proposed Tool}
-% TODO: Basic interpreter + one of: compiler, static analysis, dynamic analysis,
-% type system. What are the inputs/outputs? How does a user interact with it?
-
-compiler, where the input is a string in our source language and the output is a string in Rust.
-The user interacts with it from the command line
-As a stretch goal (see \S2), an analysis tool to glean information from impure declarations may be in scope.
+Our main tool is a \textbf{compiler}, accompanied by a basic interpreter.
+The compiler's input is a string in our source language (a \texttt{.pu} file),
+and its output is a string of Rust source code.
+Purity checking runs on the compiler's intermediate representation: a program
+that modifies outside state without declaring it is rejected with an error,
+e.g.\ ``\texttt{z} is modified but not declared in \texttt{add\_to\_z}''.
+The declarations also drive code generation, since the state an impure
+function declares becomes explicit \texttt{\&mut} parameters in the generated Rust.
+The user interacts with both tools from the command line:
+\texttt{pc compile prog.pu -o prog.rs} compiles a program, and
+\texttt{pc run prog.pu} interprets it directly.
+As a stretch goal (see \S2), an analysis tool may be in scope that reads the
+\texttt{impure} declarations and reports, for any function, everything it
+(and the functions it calls) may modify.
 
 \subsection{Scope and Related Work}
 Tracking side effects is not a new problem.
