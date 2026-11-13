@@ -228,18 +228,44 @@ Should our purity check extend to system state (see \S2), its guarantees would e
 
 \subsection{Tool and Language Selection}
 % TODO: What tools and languages will we use to build the project?
-
-Parser in Rust; meta language is Rust; target language for compiler is Rust.
+\begin{itemize}
+    \item \textbf{Implementation Language:} Rust will serve as the meta-language for building our parser, interpreter, static analysis engine, and compiler pipeline due to its strong type safety, robust pattern matching, and excellent parser-combinator ecosystems.
+    \item \textbf{Source Language:} Our custom toy programming language featuring explicit \texttt{pure} and \texttt{impure} function declarations, primitive 8-bit unsigned integers (\texttt{u8}), references, and variable scoping rules.
+    \item \textbf{Target Language:} Rust, enabling us to compile our toy language programs into idiomatic Rust code for execution and verification.
+\end{itemize}
 
 \subsection{Incorporating Existing Tools}
 % TODO: From scratch, or using existing software/code bases? Justify each one.
-
-From scratch.
+We will be building the project from scratch without relying on exsting tools. We will design and implement the interpreter, static analysis and compiler manually in Rust.
 
 \subsection{Architecture}
 % TODO: Components and how they interact. Consider a diagram (can be tentative).
 
-Core language definition; parser that outputs core; interpreter reads core and executes; compiler reads core and outputs IR, in IR we do checks on purity, then IR to target Rust
+\begin{enumerate}
+    \item \textbf{Source Code Input:} Raw source string of the custom language.
+    \item \textbf{Parser \& AST Builder:} Tokenizes the source text and constructs an Abstract Syntax Tree (AST) representing variables, functions, expressions, and purity annotations.
+    \item \textbf{Interpreter / Evaluator:} Directly evaluates the AST to execute programs for testing and validation, verifying state mutation constraints at runtime.
+    \item \textbf{Compiler \& Intermediate Representation (IR):} Transforms the AST into an intermediate representation where strict purity and state-modification checks are performed. It flags compilation errors if an unannotated function attempts out-of-scope mutations.
+    \item \textbf{Target Code Generation:} Translates the validated IR into target Rust source code, which can then be compiled and run natively.
+\end{enumerate}
+
+\begin{figure}[h]
+    \centering
+    \begin{verbatim}
+[Source Code] 
+     │
+     ▼
+[Parser / AST] ──► [Interpreter (Runtime Verification)]
+     │
+     ▼
+[Compiler IR & Purity Static Analysis]
+     │
+     ▼
+[Target Rust Code Generator]
+    \end{verbatim}
+    \caption{Tentative Architecture Flow}
+    \label{fig:architecture_flow}
+\end{figure}
 
 % \begin{figure}[h]
 %   \centering
@@ -251,9 +277,24 @@ Core language definition; parser that outputs core; interpreter reads core and e
 \subsection{Development Effort}
 % TODO: Functions/components/modules to build (refer to architecture).
 % What is explicitly out of scope?
-
+\begin{itemize}
+    \item \textbf{Core Language \& AST Definitions:} Design data structures for variables, expressions, scopes, and purity signature declarations.
+    \item \textbf{Parser Module:} Implement tokenization and grammar rules to parse function signatures, assignments, and blocks.
+    \item \textbf{Interpreter Module:} Build a state environment to track variable bindings and simulate execution while enforcing purity rules.
+    \item \textbf{Compiler \& IR Purity Checker:} Implement static checks that compare declared out-of-scope modifications against actual mutations observed in function bodies.
+\end{itemize}
 \subsection{Challenges}
 % TODO: What could go wrong? What's the fallback if a step gets difficult?
+\begin{itemize}
+    \item \textbf{Scope Tracking and Control Flow:} Tracking exact state mutations across nested function calls, references, and control-flow branches (such as \texttt{if} statements or loops) can become complex, raising questions about whether variables that \emph{might} change need explicit declarations. 
+    \begin{itemize}
+        \- \textit{Fallback:} If complex branch analysis proves too difficult within our timeline, we will restrict variable scopes to global or immediate parameters and conservatively require explicit declarations for any variable that could potentially be modified within conditional blocks.
+    \end{itemize}
+    \item \textbf{Static Analysis Complexity and Tool Overhead:} Ensuring robust coverage across all syntax variations and edge cases during static analysis risks expanding the tool's scope beyond our time constraints.
+    \begin{itemize}
+        \- \textit{Fallback:} If static analysis tooling becomes overly burdensome, we will scale back the advanced analysis tool to a reach goal, ensuring the core compiler and interpreter pipeline remains fully functional and robust.
+    \end{itemize}
+\end{itemize}
 
 % TODO:
 Tracking scope is hard; tool is too much work...
