@@ -8,6 +8,7 @@
 \usepackage[super,comma,sort&compress]{natbib}
 \usepackage{amsmath}
 \usepackage{graphicx}
+\usepackage{svg}
 \usepackage{listings}
 \lstset{basicstyle=\ttfamily\small, columns=fullflexible}
 % Typewriter braces: \texttt{\{} has no glyph in the default OT1/OMS encoding.
@@ -241,6 +242,13 @@ From scratch.
 
 Core language definition; parser that outputs core; interpreter reads core and executes; compiler reads core and outputs IR, in IR we do checks on purity, then IR to target Rust
 
+\begin{figure}[htbp]
+  \centering
+  \includesvg[width=\linewidth,inkscapelatex=false]{architecture}
+  \caption{Tool architecture, showing the interpreter and compiler paths from the shared core representation.}
+  \label{fig:architecture}
+\end{figure}
+
 % \begin{figure}[h]
 %   \centering
 %   \includegraphics[width=\linewidth]{architecture.pdf}
@@ -301,7 +309,7 @@ It may be contracted or expanded depending on our eventual project due date.
 
 % TODO: uncomment when each person agrees
 \begin{itemize}
-%   \item I commit to work and contribute equally to this project. --- \emph{Rajiv Choudhury}
+  \item I commit to work and contribute equally to this project. --- \emph{Rajiv Choudhury}
   \item I commit to work and contribute equally to this project. --- \emph{Jacob Hamzawi}
 %   \item I commit to work and contribute equally to this project. --- \emph{Rishika Nigam}
 %   \item I commit to work and contribute equally to this project. --- \emph{Gurpreet Singh}
@@ -312,11 +320,28 @@ It may be contracted or expanded depending on our eventual project due date.
 % What are we uncertain about / want feedback on?
 
 %TODO:
-Re-state goal kinda: does explicit knowledge of impure functions change programming paradigm? Or something like that.
+% Re-state goal kinda: does explicit knowledge of impure functions change programming paradigm? Or something like that.
 
-Questions: are variables enough?
-Should we focus instead on system state?
-That's more difficult but perhaps more compelling.
+% Questions: are variables enough?
+% Should we focus instead on system state?
+% That's more difficult but perhaps more compelling.
+
+Our goal is to design a systems-style language in which functions explicitly
+declare the outside state they may modify, allowing us to explore whether
+compiler-checked effect declarations make imperative programs easier to reason
+about. Developing this language will require tracking scope, identifying
+mutations through references, and accounting for effects across function calls.
+A central question is whether tracking mutations to variables and referenced
+data is enough to evaluate the design, or whether we should also model system
+state, such as file I/O. We would appreciate feedback on whether the broader
+scope would justify its added complexity within our timeline.
+
+We will develop a parser, a reference interpreter, and a compiler that translates
+our language into Rust, rejecting programs whose mutations exceed their declared
+effects. Our target also includes a command-line static analysis tool that
+enumerates the state a function may modify, including effects of the functions
+it calls. Together, these tools will let us examine both the guarantees that
+explicit effect declarations provide and the annotation effort they require.
 
 %%%%%%%%%%%%%%
 % References %

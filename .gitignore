@@ -2,6 +2,11 @@
 .vscode/*
 # leave a template settings file
 !.vscode/settings.default.json
+# macOS system files
+.DS_Store
+
+# SVG files
+svg-inkscape/
 
 # LaTeX artifacts
 proposal/build/
