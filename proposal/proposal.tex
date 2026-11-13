@@ -106,12 +106,12 @@ The user interacts with it from the command line
 As a stretch goal (see \S2), an analysis tool to glean information from impure declarations may be in scope.
 
 \subsection{Scope and Related Work}
-% TODO: Is this already solved/built? What existing tools solve similar problems?
-
-Haskell has the Monad \cite{peyton_jones_imperative_1993}
-Functional programming allows for greater modularity.\cite{hughes_why_1989}
-And they also often discourage side effects by the nature of their design.
-\texttt{cargo-scan} is a static analysis tool for Rust that detects side effects from Rust source code.\cite{zoghbi_auditing_2026}
+Tracking side effects is not a new problem.
+Haskell separates effects from pure code with the monad~\cite{peyton_jones_imperative_1993}, and functional languages generally discourage side effects by design~\cite{hughes_why_1989}.
+Effect systems originate with Lucassen and Gifford~\cite{lucassen_polymorphic_1988} and Talpin and Jouvelot~\cite{talpin_type_1994}, and Deterministic Parallel Java declares effects as region and field paths in method signatures~\cite{bocchino_type_2009}, which is close to our declarations.
+Other tools recover effects from existing code: S\u{a}lcianu and Rinard infer purity and modified state for Java~\cite{cousot_purity_2005}, and \texttt{cargo-scan} detects side effects in Rust source~\cite{zoghbi_auditing_2026}.
+These either restrict the language or infer effects after the fact.
+Ours makes declaration mandatory in an imperative language built around it and compiles it to Rust, so our contribution is a small, formally specified language, a working compiler, and an assessment of the design.
 
 \section{Goals}
 % TODO: High level; details go in later sections.
