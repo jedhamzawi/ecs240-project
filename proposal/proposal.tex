@@ -121,21 +121,21 @@ Ours makes declaration mandatory in an imperative language built around it and c
 \paragraph{Minimum goal.}
 % Must have working by end of quarter.
 
-Parser, interpreter, and working compiler.
-Interpreter and compiler must detect whether a function is pure or impure and error if a function is impure without declaring so along with the outside state it modifies.
+A parser, interpreter, and working compiler to Rust for the core language.
+The compiler must error when a function modifies outside state without declaring it as \texttt{impure} along with that state.
 
 \paragraph{Target goal.}
 % Plan to have working by end of quarter.
 
-The above, along with a static analysis tool that enumerates all the possible state that is modified given a function (including the functions it itself calls).
-The tool will at least be a CLI, but could be extended to a VSCode extension as well.
+The above, along with a static analysis tool that enumerates all state a function may modify, including through the functions it calls.
+It will be a CLI, and could be extended to a VS Code extension.
 
 \paragraph{Reach goal.}
 % Extra features if time allows; nothing on the critical path.
 
 %TODO:
-The above, as well as other Rust features that might make the division harder and mitigation: system state (file I/O), structs, etc.?
-Specifically for file I/O, we could explore options to avoid Rust's issue of \texttt{io} keyword explosion (similar to Haskell's Monad).
+Structs with field-level declarations (e.g.\ \texttt{x.value}) and file I/O.
+For I/O, we would explore ways to avoid the \texttt{io}-keyword explosion that affected Rust's earlier design.
 
 \section{Syntax and Semantics}
 % TODO: Example syntax, draft formal grammar, and at most a paragraph sketching
