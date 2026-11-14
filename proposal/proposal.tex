@@ -14,6 +14,8 @@
 % Typewriter braces: \texttt{\{} has no glyph in the default OT1/OMS encoding.
 \newcommand{\ttlbrace}{\texttt{\char`\{}}
 \newcommand{\ttrbrace}{\texttt{\char`\}}}
+% Grammar nonterminal, e.g. \nt{expr} renders as <expr>.
+\newcommand{\nt}[1]{\ensuremath{\langle\textit{#1}\rangle}}
 
 % Any configuration that should be done before the end of the preamble:
 \usepackage{hyperref}
@@ -21,8 +23,8 @@
 
 \renewcommand{\refname}{References Cited}
 
-\title{ECS 240 Project Proposal}
-\author{Rajiv Choudhury, Jacob Hamzawi, Rishika Nigam, Gurpreet Singh}
+\title{ECS 240 Project - Telltale}
+\author{Rajiv Choudhury, Jacob Hamzawi,\\ Rishika Nigam, Gurpreet Singh}
 
 \begin{document}
 
@@ -35,97 +37,38 @@
 \section{Introduction and Motivation}
 
 \subsection{Problem Domain and Motivation}
-A \emph{side effect} is a modification of state that outlives a function call,
-that is, state the function did not create itself.
-Side effects make code difficult to reason about: at a call site it is unclear
-which components a function may modify, so a reader must inspect the callee and
-everything it calls~\cite{cousot_purity_2005}.
-Functional programming avoids this problem and allows for greater
-modularity~\cite{hughes_why_1989}, and Backus argued for liberating programming
-from assignment and mutation altogether~\cite{backus_can_1978}.
-Yet effects are often necessary, as with file I/O.
-Haskell confines them to the monad~\cite{peyton_jones_imperative_1993}, and
-effect systems track them statically in types~\cite{lucassen_polymorphic_1988,talpin_type_1994}.
-Our domain is \emph{making side effects explicit in an imperative systems
-language}: every function is pure unless declared \texttt{impure}, an impure
-function must list the outside state it may modify, and the compiler checks the
-declaration.
+A function \emph{side effect} is a modification of state that outlives the function,
+that is, state not wholly contained within the function's scope.
+We say a function is \emph{pure} if it is free of side effects, and \emph{impure} if it has at least one.
+
+Side effects make code difficult to reason about: at a call site, a reader must inspect
+the callee and everything it calls to know what it may modify~\cite{cousot_purity_2005}.
+They can also make for less maintainable and modular code~\cite{hughes_why_1989,backus_can_1978}.
+Yet effects are often necessary, as with file I/O and random number generation: how do we allow them while mitigating their downsides?
 
 \subsection{Proposed Language}
-% TODO: Own toy language, or a subset of an existing one? What it contains/does,
+% Own toy language, or a subset of an existing one? What it contains/does,
 % or which keywords/features we focus on. Include example syntax.
 
-We propose a toy programming language similar to traditional systems programming languages like C and Rust with the distinction that every function is explicitly defined as "pure" or "impure", where a "pure" function may only modify state initialized in or moved into its scope.
-Our language will implement at least the minimum set of elements that allow us to illustrate this system, including variables, functions, references, and an 8-bit unsigned integer primitive as the sole type.
-%TODO: fix
-We may support other features such as structs, strings, or simple file I/O depending on our timeline (see \S\S~2~and~4).
+We propose \emph{Telltale}, a toy systems language similar to C and Rust, in which every function is explicitly declared pure or impure.
+It will include at least variables, functions, references, branches, and 32-bit integer and boolean primitives, and may support structs, strings, loops, and simple file I/O depending on our timeline (see \S\S~2~and~4).
 
-Rust itself originally sought such a design, defining all functions as "pure" by default and employing the \texttt{io} keyword to explicitly designate a function with I/O side effects.\cite{hoare2013pure}
-The language designers eventually opted to remove \texttt{io} keyword and the pure/impure separation.
-%TODO: make sure we define side effects before using it here
-We hope to discover while designing and analyzing our own language what explicit declaration of side effects could enable for language users and whether the Rust developers' decision was ultimately justified.
+Early Rust enforced functions with I/O side effects be marked with an \texttt{io} keyword but later removed it~\cite{hoare2013pure}; we hope to discover what explicit side effect declarations enable, and whether that decision was justified.
 
-\begin{lstlisting}
-fn pure_function(x, y) {
-    x + y
-}
-
-// global variable
-var z;
-
-// You must specify the data out of scope whose
-// state may change
-fn impure(z) impure_function(x, y) {
-    z = x + y;
-}
-
-// If variables have fields, those fields
-// must be declared 
-fn impure(x.value, y.value) impure_function_struct(x, y) {
-    // mutates x
-    x.value = 1;
-    y.value = 1;
-}
-
-// You can look at the program see a full list
-// of all the things that could change state
-fn impure main() {
-    var x = 1;
-    var y = 2;
-    x = pure_function(x, y);
-	  // mutated: z
-	  impure_function(x, y);
-}
-\end{lstlisting}
 
 \subsection{Proposed Tool}
-Our main tool is a \textbf{compiler}, accompanied by a basic interpreter.
-The compiler's input is a string in our source language (a \texttt{.pu} file),
-and its output is a string of Rust source code.
-Purity checking runs on the compiler's intermediate representation: a program
-that modifies outside state without declaring it is rejected with an error,
-e.g.\ ``\texttt{z} is modified but not declared in \texttt{add\_to\_z}''.
-The declarations also drive code generation, since the state an impure
-function declares becomes explicit \texttt{\&mut} parameters in the generated Rust.
+Our main tool is a \textbf{compiler} from our language to Rust source code, accompanied by a basic interpreter.
 The user interacts with both tools from the command line:
-\texttt{pc compile prog.pu -o prog.rs} compiles a program, and
-\texttt{pc run prog.pu} interprets it directly.
-As a stretch goal (see \S2), an analysis tool may be in scope that reads the
-\texttt{impure} declarations and reports, for any function, everything it
-(and the functions it calls) may modify.
+\texttt{tt prog.tt -o prog.rs} compiles a program, while
+\texttt{tt run prog.tt} interprets it directly.
 
 \subsection{Scope and Related Work}
-Tracking side effects is not a new problem.
-Haskell separates effects from pure code with the monad~\cite{peyton_jones_imperative_1993}, and functional languages generally discourage side effects by design~\cite{hughes_why_1989}.
-Effect systems originate with Lucassen and Gifford~\cite{lucassen_polymorphic_1988} and Talpin and Jouvelot~\cite{talpin_type_1994}, and Deterministic Parallel Java declares effects as region and field paths in method signatures~\cite{bocchino_type_2009}, which is close to our declarations.
-Other tools recover effects from existing code: S\u{a}lcianu and Rinard infer purity and modified state for Java~\cite{cousot_purity_2005}, and \texttt{cargo-scan} detects side effects in Rust source~\cite{zoghbi_auditing_2026}.
-These either restrict the language or infer effects after the fact.
-Ours makes declaration mandatory in an imperative language built around it and compiles it to Rust, so our contribution is a small, formally specified language, a working compiler, and an assessment of the design.
+Tracking side effects is not a new problem: Haskell separates effects from pure code with the monad~\cite{peyton_jones_imperative_1993}, and functional languages discourage them by design~\cite{hughes_why_1989}.
+Effect systems originate with Lucassen and Gifford~\cite{lucassen_polymorphic_1988} and Talpin and Jouvelot~\cite{talpin_type_1994}; Deterministic Parallel Java declares region and field paths in method signatures, close to our declarations~\cite{bocchino_type_2009}.
+Other tools infer effects in existing Java~\cite{cousot_purity_2005} and Rust~\cite{zoghbi_auditing_2026} code.
+Our contribution is a small, formally specified imperative language with built-in side effect checks, and an assessment of that design.
 
 \section{Goals}
-% TODO: High level; details go in later sections.
-
-% I kinda discussed above; we want to learn how to track scope, detect impure functions, enumerate all possible mutations from a function, and in general, discover whether a pure/impure designation would be helpful in a systems programming language.
 
 \paragraph{Minimum goal.}
 % Must have working by end of quarter.
@@ -136,23 +79,190 @@ The compiler must error when a function modifies outside state without declaring
 \paragraph{Target goal.}
 % Plan to have working by end of quarter.
 
-The above, along with a static analysis tool that enumerates all state a function may modify, including through the functions it calls.
-It will be a CLI, and could be extended to a VS Code extension.
+The above, along with structs with field-level declarations (e.g.\ \texttt{x.value}; see Appendix~\ref{app:structs}) and file I/O.
+For I/O, we would explore ways to avoid the \texttt{io}-keyword explosion that affected Rust's earlier design.
 
 \paragraph{Reach goal.}
 % Extra features if time allows; nothing on the critical path.
 
-%TODO:
-Structs with field-level declarations (e.g.\ \texttt{x.value}) and file I/O.
-For I/O, we would explore ways to avoid the \texttt{io}-keyword explosion that affected Rust's earlier design.
+The above, along with a static analysis tool that could enumerate all state a function may modify, including through the functions it calls, or show the functions that may modify a given variable.
 
 \section{Syntax and Semantics}
-% TODO: Example syntax, draft formal grammar, and at most a paragraph sketching
+% Example syntax, draft formal grammar, and at most a paragraph sketching
 % the semantics (set of (INPUT, prog, OUTPUT) triples).
 
-\paragraph{Syntax.} The syntax of our language can be described by the following example and the subsequent draft formal grammar:
+\paragraph{Syntax.} Below is a draft formal grammar; Fig.~\ref{fig:example} gives example syntax, and Appendix~\ref{app:syntax} a fuller annotated example.
 
-\bigskip
+The start symbol is \nt{program}; lexical rules, precedence, and return values are in Appendix~\ref{app:syntax}.
+
+\begin{align*}
+  \nt{program} &::= \nt{decl} \mid \nt{decl}\ \nt{program} \\
+  \nt{decl} &::= \texttt{var}\ \nt{var}\texttt{;} \\
+    &\mid \texttt{fn}\ \nt{effects}\ \nt{func}\texttt{(}\nt{param}_1\texttt{,} \dots\texttt{,} \nt{param}_k\texttt{)}\ \ttlbrace\ \nt{body}\ \ttrbrace \\
+  \nt{param} &::= \nt{var} \mid \texttt{\&}\nt{var} \\
+  \nt{effects} &::= \epsilon
+     \mid \texttt{impure}
+     \mid \texttt{impure(}\nt{place}_1\texttt{,} \dots\texttt{,} \nt{place}_m\texttt{)} \\
+  \nt{body} &::= \nt{stmts} \mid \nt{stmts}\ \nt{expr} \\
+  \nt{stmts} &::= \nt{stmt}_1 \dots \nt{stmt}_j \\
+  \nt{stmt} &::= \texttt{var}\ \nt{var}\texttt{;}
+     \mid \texttt{var}\ \nt{var} \texttt{ = } \nt{expr}\texttt{;}
+     \mid \nt{place} \texttt{ = } \nt{expr}\texttt{;} \\
+    &\mid \nt{call}\texttt{;}
+     \mid \texttt{if}\ \nt{expr}\ \ttlbrace\ \nt{stmts}\ \ttrbrace \\
+    &\mid \texttt{if}\ \nt{expr}\ \ttlbrace\ \nt{stmts}\ \ttrbrace\ \texttt{else}\ \ttlbrace\ \nt{stmts}\ \ttrbrace \\
+  \nt{call} &::= \nt{func}\texttt{(}\nt{expr}_1\texttt{,} \dots\texttt{,} \nt{expr}_k\texttt{)} \\
+  \nt{place} &::= \nt{var} \mid \nt{place}\texttt{.}\nt{field} \mid \texttt{*}\nt{place} \\
+  \nt{expr} &::= \nt{int} \mid \nt{bool} \mid \nt{place} \mid \texttt{\&}\nt{place} \mid \nt{call}
+     \mid \texttt{(}\nt{expr}\texttt{)} \\
+    &\mid \nt{unop}\ \nt{expr} \mid \nt{expr}\ \nt{binop}\ \nt{expr} \\
+  \nt{bool} &::= \texttt{true} \mid \texttt{false} \\
+  \nt{unop} &::= \texttt{-} \mid \texttt{!} \\
+  \nt{binop} &::= \texttt{+} \mid \texttt{-} \mid \texttt{*} \mid \texttt{/}
+     \mid \texttt{==} \mid \texttt{!=} \mid \texttt{<} \mid \texttt{<=} \mid \texttt{>} \mid \texttt{>=}
+     \mid \texttt{\&\&} \mid \texttt{||}
+\end{align*}
+
+\noindent where $k, m, j \geq 0$.
+A \nt{place} names a location that can be read, assigned, or declared in an \texttt{impure} clause: a variable, a field of a place (once structs are added), or the target of a reference.
+\texttt{\&}\nt{place} creates a mutable reference (Rust's \texttt{\&mut}), and a parameter \texttt{\&}\nt{var} is passed by reference.
+
+\begin{figure}[tb]
+\begin{minipage}[t]{0.48\linewidth}
+\begin{lstlisting}
+fn pure_function(x, y) {
+    x + y
+}
+
+var z; // global variable
+
+// Declare out-of-scope writes
+fn impure(z) add_to_z(x, y) {
+    z = x + y;
+}
+\end{lstlisting}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\linewidth}
+\begin{lstlisting}
+// main lists all state changes
+fn impure main() {
+    var x = 1;
+    var y = 2;
+    x = pure_function(x, y);
+    // mutated: z
+    add_to_z(x, y);
+}
+\end{lstlisting}
+\end{minipage}
+\caption{Example Telltale program.}
+\label{fig:example}
+\end{figure}
+
+\paragraph{Semantics.} The semantics of our language is the set of \texttt{(INPUT, prog, OUTPUT)} triples produced by our reference interpreter, which serves as the oracle for the compiler: the emitted Rust must produce the same output.
+Programs take no input, so \texttt{INPUT} is empty (files may become input if we add file I/O).
+A program that fails the purity check is rejected before it runs and belongs to no triple; otherwise, \texttt{OUTPUT} is the final values of all global variables once \texttt{main} returns, or an error if execution faults (e.g., integer overflow or division by zero); Appendix~\ref{app:guarantees} states the purity check's guarantees.
+
+\section{Implementation Plan}
+
+\subsection{Tool and Language Selection; Existing Tools}
+% What tools and languages will we use? From scratch, or using existing code bases?
+We will build everything from scratch in Rust, which is also our target language.
+
+\subsection{Architecture}
+% Components and how they interact. Consider a diagram (can be tentative).
+
+As shown in Fig.~\ref{fig:architecture} (Appendix~\ref{app:architecture}), the parser turns source code into a shared core representation, which the interpreter executes directly and the compiler lowers to an IR, checks for purity, and translates to Rust; both paths report violations as diagnostics.
+
+\subsection{Development Effort}
+% Functions/components/modules to build (refer to architecture).
+% What is explicitly out of scope?
+We will build each component above: the \textbf{core} language definitions, the \textbf{parser}, the \textbf{interpreter}, and the \textbf{compiler}'s lowering, purity checker, and Rust code generator.
+
+\subsection{Challenges}
+% What could go wrong? What's the fallback if a step gets difficult?
+\paragraph{Scope tracking and control flow.}
+Tracking mutations through nested calls, references, and branches is complex, and raises whether state that only \emph{might} change must be declared.
+If this proves too difficult, we will restrict scopes to globals and immediate parameters and conservatively require declarations for anything a conditional block could modify.
+
+\paragraph{Analysis tool overhead.}
+Robust static analysis across every edge case may exceed our timeline; if so, we will drop the analysis tool (a reach goal).
+
+\section{Collaboration Plan}
+% How are components divided among members? Meeting plan (suggested
+% 2x/week) and communication platform.
+
+\paragraph{Communication.}Slack, GitHub; meet Mon.\ after class, Thu.\ on Zoom.
+
+\paragraph{Division of Work and Timeline.}\mbox{}
+
+\noindent
+\begin{tabular}[t]{ll}
+  \textbf{Component} & \textbf{Member(s)} \\
+  \hline
+  Core & Jacob \\
+  Parser & Rishika \\
+  Interpreter & Gurpreet, Jacob \\
+  Compiler & Rajiv, Jacob  \\
+  Analysis tool & TBD \\
+\end{tabular}
+\hfill
+% Expected weekly timeline of which components are developed when.
+\begin{tabular}[t]{ll}
+  \textbf{Week} & \textbf{Components} \\
+  \hline
+  Week 1 & Parser + Core \\
+  Week 2 & Interpreter + Compiler \\
+  Week 3 & Interpreter + Compiler \\
+  Week 4 & Analysis tool \\
+         & Presentation \\
+\end{tabular}
+
+\paragraph{Commitment statement.}\mbox{}
+
+\noindent\emph{Rajiv Choudhury:} I commit to work and contribute equally to this project.\\
+\emph{Jacob Hamzawi:} I commit to work and contribute equally to this project.\\
+\emph{Rishika Nigam:} I commit to work and contribute equally to this project.\\
+\emph{Gurpreet Singh:} I commit to work and contribute equally to this project.
+
+\section{Conclusion and Questions for Feedback}
+% 1-2 paragraphs. What happens if successful, why it's exciting/important.
+% What are we uncertain about / want feedback on?
+
+Telltale will let us explore whether compiler-checked effect declarations make imperative programs easier to reason about, and weigh their guarantees against the annotation effort they require.
+A central question is whether tracking mutations to variables and referenced data is enough to evaluate the design, or whether we should also model system state such as file I/O; we would appreciate feedback on whether that broader scope justifies its complexity within our timeline.
+We would also like feedback on whether Telltale is too similar to Rust, given that Rust is both our implementation and target language.
+
+%%%%%%%%%%%%%%
+% References %
+%%%%%%%%%%%%%%
+
+\bibliographystyle{unsrtnat}
+\bibliography{references}
+
+% Material beyond the 5-page limit goes here (may or may not be graded):
+\appendix
+
+\section{Introduction and Motivation}
+\label{app:intro}
+
+Early Rust took our approach, treating functions as pure by default and marking I/O with an \texttt{io} keyword~\cite{hoare2013pure}, but its designers later removed the pure/impure separation.
+
+While Rust removed the \texttt{io}, \texttt{pred}, and other keywords related to pure/\allowbreak impure separation, it retains \texttt{mut} and \texttt{const} keywords to define mutability, significantly decreasing the possible surface area of mutation state.
+
+\section{Syntax and Semantics}
+\label{app:syntax}
+\label{app:structs}
+
+\nt{int} is a decimal literal from $0$ to $2^{31}-1$ (values are 32-bit signed integers).
+\nt{var}, \nt{func}, and \nt{field} are identifiers (letters, digits, and underscores, beginning with a letter) naming variables, functions, and struct fields.
+
+The grammar for \nt{expr} is ambiguous as written. Unary \texttt{*}, \texttt{\&}, \texttt{-}, and \texttt{!} bind tightest, then \texttt{*} and \texttt{/}, then \texttt{+} and \texttt{-}, then the comparisons, then \texttt{\&\&}, then \texttt{||}.
+Comparisons are non-associative; all other binary operators are left-associative.
+The condition of an \texttt{if} must evaluate to a boolean.
+A trailing \nt{expr} with no semicolon is the function's return value, as in Rust.
+
+
+\noindent A complete annotated example:
 
 \begin{lstlisting}
 fn pure_function(x, y) {
@@ -164,16 +274,8 @@ var z;
 
 // You must specify the data out of scope whose
 // state may change
-fn impure(z) impure_function(x, y) {
+fn impure(z) add_to_z(x, y) {
     z = x + y;
-}
-
-// If variables have fields, those fields
-// must be declared
-fn impure(x.value, y.value) impure_function_struct(x, y) {
-    // mutates x
-    x.value = 1;
-    y.value = 1;
 }
 
 // Data reached through a reference is out of scope,
@@ -182,73 +284,46 @@ fn impure(*r) increment(&r) {
     *r = *r + 1;
 }
 
-// You can look at the program see a full list
+// You can look at the program and see a full list
 // of all the things that could change state
 fn impure main() {
     var x = 1;
     var y = 2;
     x = pure_function(x, y);
     // mutated: z
-    impure_function(x, y);
+    add_to_z(x, y);
     // mutated: x (through the reference)
     increment(&x);
 }
 \end{lstlisting}
 
-Start symbol $P$ (program).
-Metavariables: $n$ ranges over integer literals $0$--$255$, $x, f, \ell$ range over identifiers (letters, digits, and underscores, beginning with a letter) applying to variable, function, and field names respectively.
+\noindent Field-level declarations for structs (a target goal):
 
-\begin{align*}
-  P &::= D \mid D\ P \\
-  D &::= \texttt{var}\ x\texttt{;}
-     \mid \texttt{fn}\ a\ f\texttt{(}q_1, \dots, q_k\texttt{)}\ \ttlbrace\ B\ \ttrbrace \\
-  q &::= x \mid \texttt{\&}x \\
-  a &::= \epsilon
-     \mid \texttt{impure}
-     \mid \texttt{impure(}p_1, \dots, p_m\texttt{)} \\
-  B &::= s_1 \dots s_j \mid s_1 \dots s_j\ e \\
-  s &::= \texttt{var}\ x\texttt{;}
-     \mid \texttt{var}\ x \texttt{ = } e\texttt{;}
-     \mid p \texttt{ = } e\texttt{;}
-     \mid f\texttt{(}e_1, \dots, e_k\texttt{)}\texttt{;} \\
-  p &::= x \mid p\texttt{.}\ell \mid \texttt{*}p \\
-  e &::= n \mid p \mid \texttt{\&}p \mid e_1 \oplus e_2 \mid \texttt{(}e\texttt{)}
-     \mid f\texttt{(}e_1, \dots, e_k\texttt{)} \\
-  \oplus &::= \texttt{+} \mid \texttt{-} \mid \texttt{*} \mid \texttt{/}
-\end{align*}
+\begin{lstlisting}
+// If variables have fields, those fields
+// must be declared
+fn impure(x.value, y.value) impure_function_struct(x, y) {
+    // mutates x
+    x.value = 1;
+    y.value = 1;
+}
+\end{lstlisting}
 
-\noindent where $k, m, j \geq 0$.
-A place $p$ names a location that can be read, assigned, or declared in an \texttt{impure} clause: a variable, a field of a place, or the target of a reference.
-\texttt{\&}$p$ creates a reference to $p$; all references are mutable (Rust's \texttt{\&mut}) but are written \texttt{\&}.
-Function signatures show which arguments are passed by reference with an explicit symbol \texttt{\&}$x$. 
-The grammar for $e$ is ambiguous as written: unary \texttt{*} and \texttt{\&} bind tightest, then \texttt{*} and \texttt{/}, then \texttt{+} and \texttt{-}, and all binary operators are left-associative.
-A trailing expression $e$ with no semicolon is the function's return value, as in Rust.
+\paragraph{Purity guarantees.}
+\label{app:guarantees}
+The purity check must guarantee that a call to a function declared \texttt{impure(}$p_1, \dots, p_m$\texttt{)} changes only $p_1, \dots, p_m$, and a call to a pure function changes no state outside its scope.
+The interpreter verifies this by comparing state before and after each call, so any violation exposes a bug in the purity check.
 
-\paragraph{Semantics.} The semantics of our language can be described as the set of \texttt{(INPUT, prog, OUTPUT)} triples produced by our reference interpreter, which serves as the oracle for the compiler: for every program, the emitted Rust must produce the same output.
-Programs take no input, so \texttt{INPUT} is always empty.
-This could change if we decide to investigate file I/O or read from stdin.
-As in Rust, a program that fails the purity check is rejected before it runs and so belongs to no triple.
-For every other program, \texttt{OUTPUT} is the final values of all global variables once \texttt{main} returns, or an error if execution faults (e.g., \texttt{u8} overflow or division by zero).
-Our language's purity check must guarantee that in any accepted program, a call to a function declared \texttt{impure(}$p_1, \dots, p_m$\texttt{)} changes only $p_1, \dots, p_m$, and a call to a pure function cannot change state outside its own scope.
-The interpreter can verify this by comparing state before and after each call, so any violation exposes a bug in the purity check itself.
-Should our purity check extend to system state (see \S2), its guarantees would extend along with it (e.g. no file is read or written unless explicitly declared, etc.).
+\section{Architecture}
+\label{app:architecture}
 
-\section{Implementation Plan}
+\begin{figure}[h]
+  \centering
+  \includesvg[width=\linewidth,inkscapelatex=false]{architecture}
+  \caption{Tool architecture, showing the interpreter and compiler paths from the shared core representation.}
+  \label{fig:architecture}
+\end{figure}
 
-\subsection{Tool and Language Selection}
-% TODO: What tools and languages will we use to build the project?
-\begin{itemize}
-    \item \textbf{Implementation Language:} Rust will serve as the meta-language for building our parser, interpreter, static analysis engine, and compiler pipeline due to its strong type safety, robust pattern matching, and excellent parser-combinator ecosystems.
-    \item \textbf{Source Language:} Our custom toy programming language featuring explicit \texttt{pure} and \texttt{impure} function declarations, primitive 8-bit unsigned integers (\texttt{u8}), references, and variable scoping rules.
-    \item \textbf{Target Language:} Rust, enabling us to compile our toy language programs into idiomatic Rust code for execution and verification.
-\end{itemize}
-
-\subsection{Incorporating Existing Tools}
-% TODO: From scratch, or using existing software/code bases? Justify each one.
-We will be building the project from scratch without relying on exsting tools. We will design and implement the interpreter, static analysis and compiler manually in Rust.
-
-\subsection{Architecture}
-% TODO: Components and how they interact. Consider a diagram (can be tentative).
 
 \begin{enumerate}
     \item \textbf{Source Code Input:} Raw source string of the custom language.
@@ -257,186 +332,5 @@ We will be building the project from scratch without relying on exsting tools. W
     \item \textbf{Compiler \& Intermediate Representation (IR):} Transforms the AST into an intermediate representation where strict purity and state-modification checks are performed. It flags compilation errors if an unannotated function attempts out-of-scope mutations.
     \item \textbf{Target Code Generation:} Translates the validated IR into target Rust source code, which can then be compiled and run natively.
 \end{enumerate}
-
-\begin{figure}[h]
-    \centering
-    \begin{verbatim}
-[Source Code] 
-     │
-     ▼
-[Parser / AST] ──► [Interpreter (Runtime Verification)]
-     │
-     ▼
-[Compiler IR & Purity Static Analysis]
-     │
-     ▼
-[Target Rust Code Generator]
-    \end{verbatim}
-    \caption{Tentative Architecture Flow}
-    \label{fig:architecture_flow}
-\end{figure}
-
-\begin{figure}[htbp]
-  \centering
-  \includesvg[width=\linewidth,inkscapelatex=false]{architecture}
-  \caption{Tool architecture, showing the interpreter and compiler paths from the shared core representation.}
-  \label{fig:architecture}
-\end{figure}
-
-% \begin{figure}[h]
-%   \centering
-%   \includegraphics[width=\linewidth]{architecture.pdf}
-%   \caption{Tool architecture.}
-%   \label{fig:architecture}
-% \end{figure}
-
-\subsection{Development Effort}
-% TODO: Functions/components/modules to build (refer to architecture).
-% What is explicitly out of scope?
-\begin{itemize}
-    \item \textbf{Core Language \& AST Definitions:} Design data structures for variables, expressions, scopes, and purity signature declarations.
-    \item \textbf{Parser Module:} Implement tokenization and grammar rules to parse function signatures, assignments, and blocks.
-    \item \textbf{Interpreter Module:} Build a state environment to track variable bindings and simulate execution while enforcing purity rules.
-    \item \textbf{Compiler \& IR Purity Checker:} Implement static checks that compare declared out-of-scope modifications against actual mutations observed in function bodies.
-\end{itemize}
-\subsection{Challenges}
-% TODO: What could go wrong? What's the fallback if a step gets difficult?
-\begin{itemize}
-    \item \textbf{Scope Tracking and Control Flow:} Tracking exact state mutations across nested function calls, references, and control-flow branches (such as \texttt{if} statements or loops) can become complex, raising questions about whether variables that \emph{might} change need explicit declarations. 
-    \begin{itemize}
-        \- \textit{Fallback:} If complex branch analysis proves too difficult within our timeline, we will restrict variable scopes to global or immediate parameters and conservatively require explicit declarations for any variable that could potentially be modified within conditional blocks.
-    \end{itemize}
-    \item \textbf{Static Analysis Complexity and Tool Overhead:} Ensuring robust coverage across all syntax variations and edge cases during static analysis risks expanding the tool's scope beyond our time constraints.
-    \begin{itemize}
-        \- \textit{Fallback:} If static analysis tooling becomes overly burdensome, we will scale back the advanced analysis tool to a reach goal, ensuring the core compiler and interpreter pipeline remains fully functional and robust.
-    \end{itemize}
-\end{itemize}
-
-% TODO:
-Tracking scope is hard; tool is too much work...
-Fallback..?
-What if a variable will \emph{never} change state? if we have if statements...should we detect that? need it be declared?
-
-\section{Collaboration Plan}
-% TODO: How are components divided among members? Meeting plan (suggested
-% 2x/week) and communication platform.
-
-% TODO:
-\paragraph{Division of Work.} Work divided as follows
-
-\bigskip
-
-\begin{tabular}{ll}
-  \textbf{Component} & \textbf{Group Member(s)} \\
-  \hline
-  Core & Jacob Hamzawi \\
-  Parser & ? \\
-  Interpreter & ? \\
-  Compiler & ? \\
-  Analysis tool & ? \\
-\end{tabular}
-
-\paragraph{Communication.}Slack and GitHub; Meetings after class on Monday and over Zoom on Thursday
-
-\paragraph{Timeline.}
-% Expected weekly timeline of which components are developed when.
-
-The below timeline assumes a 4-week time allotment to complete the project.
-It may be contracted or expanded depending on our eventual project due date.
-
-% TODO:
-\begin{tabular}{ll}
-  \textbf{Week} & \textbf{Components} \\
-  \hline
-  Week 1 & Parser \\
-  Week 2 & Interpreter + Compiler \\
-  Week 3 & Analysis tool + exploration \\
-  Week 4 & Presentation \\
-\end{tabular}
-
-\paragraph{Commitment statement.}
-
-% TODO: uncomment when each person agrees
-\begin{itemize}
-  \item I commit to work and contribute equally to this project. --- \emph{Rajiv Choudhury}
-  \item I commit to work and contribute equally to this project. --- \emph{Jacob Hamzawi}
-%   \item I commit to work and contribute equally to this project. --- \emph{Rishika Nigam}
-%   \item I commit to work and contribute equally to this project. --- \emph{Gurpreet Singh}
-\end{itemize}
-
-\section{Conclusion and Questions for Feedback}
-% TODO: 1-2 paragraphs. What happens if successful, why it's exciting/important.
-% What are we uncertain about / want feedback on?
-
-%TODO:
-% Re-state goal kinda: does explicit knowledge of impure functions change programming paradigm? Or something like that.
-
-% Questions: are variables enough?
-% Should we focus instead on system state?
-% That's more difficult but perhaps more compelling.
-
-Our goal is to design a systems-style language in which functions explicitly
-declare the outside state they may modify, allowing us to explore whether
-compiler-checked effect declarations make imperative programs easier to reason
-about. Developing this language will require tracking scope, identifying
-mutations through references, and accounting for effects across function calls.
-A central question is whether tracking mutations to variables and referenced
-data is enough to evaluate the design, or whether we should also model system
-state, such as file I/O. We would appreciate feedback on whether the broader
-scope would justify its added complexity within our timeline.
-
-We will develop a parser, a reference interpreter, and a compiler that translates
-our language into Rust, rejecting programs whose mutations exceed their declared
-effects. Our target also includes a command-line static analysis tool that
-enumerates the state a function may modify, including effects of the functions
-it calls. Together, these tools will let us examine both the guarantees that
-explicit effect declarations provide and the annotation effort they require.
-
-%%%%%%%%%%%%%%
-% References %
-%%%%%%%%%%%%%%
-
-\bibliographystyle{unsrtnat}
-\bibliography{references}
-
-% Material beyond the 5-page limit goes here (may or may not be graded):
-% TODO: appendix
-\appendix
-\section{Complete Formal Grammar (In Progress)}
-
-\newcommand{\concat}{%
-  \mathbin{{+}\mspace{-8mu}{+}}%
-}
-
-\begin{align*}
-  S &::= \\
-  %expressions
-  \texttt{<Int>} &::= 0 \mid \texttt{<NonZeroInt>} \\
-  \texttt{<NonZeroInt>} &::= \texttt{<NonZeroDigit>} \mid \texttt{<NonZeroInt>} \concat \texttt{<Digit>} \\
-  \texttt{<NonZeroDigit>} &::= 1 \mid 2 \mid 3 \mid 4 \mid 5 \mid 6 \mid 7 \mid 8 \mid 9 \\
-  \texttt{<Digit>} &::= 0 \mid \texttt{<NonZeroDigit>} \\
-  \texttt{<Exp>} &::= \texttt{<MultDivExp>} \mid \texttt{<Exp> <AddSubOp> <MultDivExp>}  \\
-  \texttt{<AddSubOp>} &::= + \mid - \\
-  \texttt{<MultDivExp>} &::= \texttt{<Factor>} \mid \texttt{<MultDivExp> <MultDivOp> <Factor>} \\
-  \texttt{<Factor>} &::= \texttt{<Int>} \mid \texttt{<Var>} \mid \texttt{(<Exp>)} \\
-  \texttt{<MultDivOp>} &::= * \mid / \\
-  %statements
-  \texttt{<Body>} &::= \texttt{<StmtList>} \mid \texttt{<Return>} \mid \texttt{<StmtList>} \concat \texttt{<Return>} \\
-  \texttt{<StmtList>} &::= \texttt{<Statement>} \mid \texttt{<StmtList>} \concat \texttt{<Statement>} \\
-  %TODO: statements: assignment, declaration, or function call
-  \texttt{<Statement>} &::= \texttt{<Declaration>;} \mid \texttt{<Assignment>;} \\
-  \texttt{<Declaration>} &::= \texttt{var <Var>} \mid \texttt{var <Var> = <Exp>} \\
-  \texttt{<Assignment>} &::= \texttt{<Var> = <Exp>} \\
-  \texttt{<Return>} &::= \texttt{<Exp>} \\
-  %TODO: function names?
-  \texttt{<Call>} &::= \texttt{<Var> = <Exp>} \\
-  %TODO: functions
-  \texttt{<Fn>} &::= \\
-  \texttt{<FnSig>} &::= \texttt{<Var>()} \\
-  %TODO: underscores; also function names are just variables names as far as I can tell
-  %TODO: variables, functions
-  \texttt{<Letter>} &::= [a-zA-Z] \\
-  \texttt{<Var>} &::= \texttt{<Letter>} \mid \texttt{<Var>} \concat \texttt{<Letter>} \mid \texttt{<Var>} \concat \texttt{<Digit>} \\
-\end{align*}
 
 \end{document}

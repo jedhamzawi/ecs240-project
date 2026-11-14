@@ -10,4 +10,5 @@ svg-inkscape/
 
 # LaTeX artifacts
 proposal/build/
+report/build/
 *.synctex.gz
