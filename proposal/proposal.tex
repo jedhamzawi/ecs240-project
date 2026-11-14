@@ -333,41 +333,4 @@ The interpreter verifies this by comparing state before and after each call, so 
     \item \textbf{Target Code Generation:} Translates the validated IR into target Rust source code, which can then be compiled and run natively.
 \end{enumerate}
 
-\section{Complete Formal Grammar (In Progress)}
-
-\newcommand{\concat}{%
-  \mathbin{{+}\mspace{-8mu}{+}}%
-}
-
-\begin{align*}
-  S &::= \\
-  %expressions
-  \texttt{<Int>} &::= 0 \mid \texttt{<NonZeroInt>} \\
-  \texttt{<NonZeroInt>} &::= \texttt{<NonZeroDigit>} \mid \texttt{<NonZeroInt>} \concat \texttt{<Digit>} \\
-  \texttt{<NonZeroDigit>} &::= 1 \mid 2 \mid 3 \mid 4 \mid 5 \mid 6 \mid 7 \mid 8 \mid 9 \\
-  \texttt{<Digit>} &::= 0 \mid \texttt{<NonZeroDigit>} \\
-  \texttt{<Exp>} &::= \texttt{<MultDivExp>} \mid \texttt{<Exp> <AddSubOp> <MultDivExp>}  \\
-  \texttt{<AddSubOp>} &::= + \mid - \\
-  \texttt{<MultDivExp>} &::= \texttt{<Factor>} \mid \texttt{<MultDivExp> <MultDivOp> <Factor>} \\
-  \texttt{<Factor>} &::= \texttt{<Int>} \mid \texttt{<Var>} \mid \texttt{(<Exp>)} \\
-  \texttt{<MultDivOp>} &::= * \mid / \\
-  %statements
-  \texttt{<Body>} &::= \texttt{<StmtList>} \mid \texttt{<Return>} \mid \texttt{<StmtList>} \concat \texttt{<Return>} \\
-  \texttt{<StmtList>} &::= \texttt{<Statement>} \mid \texttt{<StmtList>} \concat \texttt{<Statement>} \\
-  %TODO: statements: assignment, declaration, or function call
-  \texttt{<Statement>} &::= \texttt{<Declaration>;} \mid \texttt{<Assignment>;} \\
-  \texttt{<Declaration>} &::= \texttt{var <Var>} \mid \texttt{var <Var> = <Exp>} \\
-  \texttt{<Assignment>} &::= \texttt{<Var> = <Exp>} \\
-  \texttt{<Return>} &::= \texttt{<Exp>} \\
-  %TODO: function names?
-  \texttt{<Call>} &::= \texttt{<Var> = <Exp>} \\
-  %TODO: functions
-  \texttt{<Fn>} &::= \\
-  \texttt{<FnSig>} &::= \texttt{<Var>()} \\
-  %TODO: underscores; also function names are just variables names as far as I can tell
-  %TODO: variables, functions
-  \texttt{<Letter>} &::= [a-zA-Z] \\
-  \texttt{<Var>} &::= \texttt{<Letter>} \mid \texttt{<Var>} \concat \texttt{<Letter>} \mid \texttt{<Var>} \concat \texttt{<Digit>} \\
-\end{align*}
-
 \end{document}
