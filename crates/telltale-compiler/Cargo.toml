@@ -1,0 +1,7 @@
+[package]
+name = "telltale-compiler"
+version = { workspace = true }
+edition = "2024"
+
+[dependencies]
+telltale-core = { workspace = true }

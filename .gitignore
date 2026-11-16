@@ -12,3 +12,7 @@ svg-inkscape/
 proposal/build/
 report/build/
 *.synctex.gz
+
+# Added by cargo
+
+/target
