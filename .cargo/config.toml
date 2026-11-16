@@ -1,0 +1,3 @@
+# Run the CLI more easily with `cargo tt`
+[alias]
+tt = "run -p telltale-cli --"

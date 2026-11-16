@@ -1,0 +1,21 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.1.0"
+authors = [
+    "Rajiv Choudhury <rrchoudhury@ucdavis.edu>",
+    "Jake Hamzawi <jehamzawi@ucdavis.edu>",
+    "Rishika Nigam <rishnigam@ucdavis.edu>",
+    "Gurpreet Singh <gnosingh@ucdavis.edu>"
+    ]
+description = "The Telltale toy programming language, a project for ECS240 at UC Davis"
+
+[workspace.dependencies]
+# define members of workspace and their paths here so we don't have
+# to do it for each member (they can just use workspace = true)
+telltale-core = { path = "crates/telltale-core" }
+telltale-parser = { path = "crates/telltale-parser" }
+"telltale-interpreter" = { path = "crates/telltale-interpreter" }
+telltale-compiler = { path = "crates/telltale-compiler" }

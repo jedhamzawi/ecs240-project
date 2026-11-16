@@ -1,0 +1,18 @@
+[package]
+name = "telltale-cli"
+version = { workspace = true }
+edition = "2024"
+
+[[bin]]
+name = "tt"
+path = "src/main.rs"
+
+[dependencies]
+# telltale component dependencies
+telltale-core = { workspace = true }
+telltale-parser = { workspace = true }
+telltale-interpreter = { workspace = true }
+telltale-compiler = { workspace = true }
+
+# other `tt` CLI dependencies
+clap = { version = "4.6", features = ["derive"] }
