@@ -28,10 +28,14 @@ pub struct RunCommand {
 #[derive(Debug, Clone, Parser)]
 pub struct CompileCommand {
     /// The path to the Telltale source file (`.tt`) to compile
-    pub source_file: PathBuf,
+    pub source_path: PathBuf,
     /// The path to the output
     ///
     /// Default is [`source_file`].rs
     #[clap(short, long)]
     pub output: Option<PathBuf>,
+    #[clap(long, conflicts_with = "output")]
+    pub stdout: bool,
+    // TODO: add option in compile to automatically compile the output Rust with rustc;
+    // also maybe add an option to run it
 }

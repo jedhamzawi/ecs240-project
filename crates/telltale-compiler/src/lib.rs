@@ -8,11 +8,11 @@
 
 use telltale_core::Telltale;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct TelltaleCompiler {}
 
 impl TelltaleCompiler {
-    pub fn compile(prog: &Telltale) -> String {
-        unimplemented!()
+    pub fn compile(&mut self, prog: &Telltale) -> String {
+        unimplemented!("Compiler is not yet implemented")
     }
 }
