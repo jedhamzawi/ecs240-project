@@ -17,5 +17,5 @@ description = "The Telltale toy programming language, a project for ECS240 at UC
 # to do it for each member (they can just use workspace = true)
 telltale-core = { path = "crates/telltale-core" }
 telltale-parser = { path = "crates/telltale-parser" }
-"telltale-interpreter" = { path = "crates/telltale-interpreter" }
+telltale-interpreter = { path = "crates/telltale-interpreter" }
 telltale-compiler = { path = "crates/telltale-compiler" }

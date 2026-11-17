@@ -3,14 +3,15 @@
 use std::error::Error;
 use std::fmt;
 
-#[derive(Debug)]
-pub enum TelltaleParseError {}
+#[derive(Debug, PartialEq)]
+pub enum TelltaleParseError {
+    EmptyInput,
+}
 
 impl fmt::Display for TelltaleParseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // TODO: display errors for each case with info
         match self {
-            _ => write!(f, "TelltaleParseError"),
+            Self::EmptyInput => write!(f, "Telltale program is empty!"),
         }
     }
 }
