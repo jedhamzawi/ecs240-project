@@ -13,6 +13,9 @@ pub struct TelltaleParser {}
 
 impl TelltaleParser {
     pub fn parse(&self, raw: &str) -> Result<Telltale, TelltaleParseError> {
+        if raw.is_empty() {
+            return Err(TelltaleParseError::EmptyInput);
+        }
         unimplemented!("Parser is not yet implemented");
     }
 }
@@ -25,7 +28,19 @@ mod tests {
     fn empty_prog() {
         let parser = TelltaleParser::default();
         let raw = "fn main() {}";
-        let telltale_prog = parser.parse(raw).unwrap();
-        // TODO: make sure we parsed the right thing
+        let telltale_prog = parser.parse(raw);
+        assert!(
+            telltale_prog
+                .as_ref()
+                .is_ok_and(|prog| prog == &Telltale::default())
+        );
+    }
+
+    #[test]
+    fn empty_input() {
+        let parser = TelltaleParser::default();
+        let raw = "";
+        let telltale_prog = parser.parse(raw);
+        assert!(telltale_prog.is_err_and(|err| err == TelltaleParseError::EmptyInput));
     }
 }
