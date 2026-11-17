@@ -2,11 +2,11 @@
 
 use telltale_core::Telltale;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct TelltaleInterpreter {}
 
 impl TelltaleInterpreter {
-    pub fn interpret(prog: &Telltale) {
-        unimplemented!()
+    pub fn interpret(&mut self, prog: &Telltale) {
+        unimplemented!("Interpreter is not yet implemented")
     }
 }
