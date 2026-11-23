@@ -40,26 +40,23 @@ enum Token {
 // 2. TOKENIZER
 
 fn tokenize(input: &str) -> Result<Vec<Token>, TelltaleParseError> {
-    let chars: Vec<char> = input.chars().collect();
-
+    let mut chars = input.chars().peekable();
     let mut tokens = Vec::new();
-    let mut i = 0;
 
-    while i < chars.len() {
-        let c = chars[i];
-
+    while let Some(c) = chars.next() {
         // Ignore whitespace
         if c.is_whitespace() {
-            i += 1;
             continue;
         }
 
         // Ignore single-line comments
-        if c == '/' && i + 1 < chars.len() && chars[i + 1] == '/' {
-            i += 2;
+        if c == '/' && chars.peek() == Some(&'/') {
+            chars.next();
 
-            while i < chars.len() && chars[i] != '\n' {
-                i += 1;
+            while let Some(ch) = chars.next() {
+                if ch == '\n' {
+                    break;
+                }
             }
 
             continue;
@@ -67,13 +64,16 @@ fn tokenize(input: &str) -> Result<Vec<Token>, TelltaleParseError> {
 
         // Read integer literals
         if c.is_ascii_digit() {
-            let start = i;
+            let mut number = String::new();
+            number.push(c);
 
-            while i < chars.len() && chars[i].is_ascii_digit() {
-                i += 1;
+            while let Some(&next) = chars.peek() {
+                if next.is_ascii_digit() {
+                    number.push(chars.next().unwrap());
+                } else {
+                    break;
+                }
             }
-
-            let number: String = chars[start..i].iter().collect();
 
             let value = number
                 .parse::<usize>()
@@ -85,13 +85,16 @@ fn tokenize(input: &str) -> Result<Vec<Token>, TelltaleParseError> {
 
         // Read identifiers and keywords
         if c.is_ascii_alphabetic() || c == '_' {
-            let start = i;
+            let mut word = String::new();
+            word.push(c);
 
-            while i < chars.len() && (chars[i].is_ascii_alphanumeric() || chars[i] == '_') {
-                i += 1;
+            while let Some(&next) = chars.peek() {
+                if next.is_ascii_alphanumeric() || next == '_' {
+                    word.push(chars.next().unwrap());
+                } else {
+                    break;
+                }
             }
-
-            let word: String = chars[start..i].iter().collect();
 
             let token = match word.as_str() {
                 "fn" => Token::Fn,
@@ -111,26 +114,21 @@ fn tokenize(input: &str) -> Result<Vec<Token>, TelltaleParseError> {
             ')' => Token::RightParen,
             '{' => Token::LeftBrace,
             '}' => Token::RightBrace,
-
             ',' => Token::Comma,
             ';' => Token::Semicolon,
             '=' => Token::Equal,
-
             '+' => Token::Plus,
             '-' => Token::Minus,
             '*' => Token::Star,
             '/' => Token::Slash,
-
             _ => return Err(TelltaleParseError::UnexpectedCharacter(c)),
         };
 
         tokens.push(token);
-        i += 1;
     }
 
     Ok(tokens)
 }
-
 // Our tokenizer scans the source code character by character. It recognizes keywords, identifiers, integer literals, operators, punctuation, whitespace, and comments. 
 //It returns a vector of tokens, which is then passed to the parser.
 
