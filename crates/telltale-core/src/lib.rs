@@ -1,6 +1,8 @@
 //! Core definition of the Telltale language, including its syntax and semantics
 
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt};
+
+mod purity;
 
 /// The name of the main function in Telltale, the entrypoint function that is
 /// executed when running the program
@@ -11,7 +13,7 @@ use std::collections::HashMap;
 pub const MAIN_FN_NAME: &str = "main";
 
 /// A variable in the language that can contain any valid value (e.g. 'x', 'my_num')
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Variable {
     pub name: String,
 }
@@ -21,6 +23,12 @@ impl Variable {
         Self {
             name: name.to_string(),
         }
+    }
+}
+
+impl fmt::Display for Variable {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.name)
     }
 }
 
