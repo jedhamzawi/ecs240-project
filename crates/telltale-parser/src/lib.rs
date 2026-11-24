@@ -1,4 +1,4 @@
-// Telltale parser
+//! Telltale parser
 
 use std::collections::HashMap;
 
@@ -128,12 +128,10 @@ fn tokenize(input: &str) -> Result<Vec<Token>, TelltaleParseError> {
     }
 
     Ok(tokens)
-}
-// Our tokenizer scans the source code character by character. It recognizes keywords, identifiers, integer literals, operators, punctuation, whitespace, and comments. 
-//It returns a vector of tokens, which is then passed to the parser.
+}// Our tokenizer scans the source code character by character. It recognizes keywords, identifiers, integer literals, operators, punctuation, whitespace, and comments.
+// It returns a vector of tokens, which is then passed to the parser.
 
 // 3. PARSER STRUCT
-
 struct Parser {
     tokens: Vec<Token>,
     pos: usize,
@@ -175,7 +173,7 @@ impl Parser {
         }
     }
 }
-//The Parser struct maintains a cursor over the token vector. peek() inspects the current token, advance() consumes it, 
+//The Parser struct maintains a cursor over the token vector. peek() inspects the current token, advance() consumes it,
 //and expect() validates that the next token matches the grammar.
 
 // 4. PARSE THE COMPLETE PROGRAM
@@ -214,8 +212,8 @@ impl Parser {
         })
     }
 }
-//parse_program() is the top-level parsing function. 
-//It repeatedly parses function definitions, stores them in a HashMap, checks for duplicate names, 
+//parse_program() is the top-level parsing function.
+//It repeatedly parses function definitions, stores them in a HashMap, checks for duplicate names,
 //and verifies that the program contains a parameterless main function.
 
 // 5. PARSE FUNCTION DECLARATIONS
@@ -307,7 +305,7 @@ impl Parser {
         Ok(parameters)
     }
 }
-//parse_function() combines smaller parsing functions. 
+//parse_function() combines smaller parsing functions.
 //It reads the function name, optional effects, parameters, and body, then constructs the Function AST node.
 
 // 6. PARSE FUNCTION BODY AND STATEMENTS
@@ -466,9 +464,9 @@ impl Parser {
         }
     }
 }
-//We use precedence climbing to parse arithmetic expressions. 
+//We use precedence climbing to parse arithmetic expressions.
 //Each operator has a precedence level. When parsing an operator,
-//we recursively parse its right-hand side with a higher minimum precedence. 
+//we recursively parse its right-hand side with a higher minimum precedence.
 //This ensures multiplication and division are grouped before addition and subtraction.
 
 // 8. PARSE FUNCTION CALLS
@@ -504,7 +502,6 @@ impl Parser {
 }
 
 // 9. PUBLIC TELLTALE PARSER
-
 
 #[derive(Default)]
 pub struct TelltaleParser {}
