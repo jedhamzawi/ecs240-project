@@ -1,4 +1,4 @@
-// Telltale parser errors
+//! Telltale parser errors
 
 use std::error::Error;
 use std::fmt;
