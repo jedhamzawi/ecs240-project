@@ -16,6 +16,14 @@ pub struct Variable {
     pub name: String,
 }
 
+impl Variable {
+    pub fn new(name: impl ToString) -> Self {
+        Self {
+            name: name.to_string(),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub enum IntExpr {
     /// A integer literal (e.g. '10')
@@ -42,13 +50,26 @@ pub enum BoolExpr {
     // TODO: Add others: Not, And, Or, etc.
 }
 
+// TODO: should this be a separate type..? Maybe not. Should references be
+// IntExpr? Are references IntExpr? I think no
+/// An argument to a function call
+#[derive(Debug, PartialEq)]
+pub enum Argument {
+    /// An integer expression
+    /// '10 + 3', 'x', 'x * y', etc.
+    IntExpr(IntExpr),
+    /// A reference to a variable
+    /// '&x'
+    Reference(Variable),
+}
+
 #[derive(Debug, PartialEq)]
 pub struct FunctionCall {
     // TODO: different type?
     /// The name of the function being called
     pub function_name: String,
-    /// The parameters passed to the function
-    pub parameters: Vec<IntExpr>,
+    /// The arguments passed to the function
+    pub arguments: Vec<Argument>,
 }
 
 /// A single statement in the program, ending in a semicolon ';'
@@ -87,6 +108,18 @@ pub struct Body {
     // pub return_expr: Option<IntExpr>,
 }
 
+/// A parameter to a function, either a value or a reference
+///
+/// Currently, parameters are *always* mutable
+#[derive(Debug, PartialEq)]
+pub enum Parameter {
+    /// Passing the variable as a value, *moving* or *copying* the variable
+    /// into the function under Rust semantics
+    Value(Variable),
+    /// Passing the variable
+    Reference(Variable),
+}
+
 /// The `impure()` designation for a function, defining
 /// that a function is impure and enumerating the elements
 /// of outside state that may be mutated
@@ -116,7 +149,7 @@ pub struct Function {
     pub impure_designation: Option<ImpureDesignation>,
     /// Any parameters to the function
     // TODO: support references
-    pub parameters: Vec<Variable>,
+    pub parameters: Vec<Parameter>,
     /// The body of the function
     pub body: Body,
 }
