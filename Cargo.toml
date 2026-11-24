@@ -3,7 +3,6 @@ resolver = "3"
 members = ["crates/*"]
 
 [workspace.package]
-version = "0.1.0"
 authors = [
     "Rajiv Choudhury <rrchoudhury@ucdavis.edu>",
     "Jake Hamzawi <jehamzawi@ucdavis.edu>",
@@ -15,6 +14,9 @@ description = "The Telltale toy programming language, a project for ECS240 at UC
 [workspace.dependencies]
 # define members of workspace and their paths here so we don't have
 # to do it for each member (they can just use workspace = true)
+#
+# TODO: we should allow multiple versions
+# (e.g. a compiler should be able to compile both 0.1.0 and 0.2.0)
 telltale-core = { path = "crates/telltale-core" }
 telltale-parser = { path = "crates/telltale-parser" }
 telltale-interpreter = { path = "crates/telltale-interpreter" }
