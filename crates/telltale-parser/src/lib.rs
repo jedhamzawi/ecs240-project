@@ -3,8 +3,8 @@
 use std::collections::HashMap;
 
 use telltale_core::{
-    Body, Function, FunctionCall, ImpureDesignation, IntExpr, MAIN_FN_NAME, Statement, Telltale,
-    Variable,
+    Argument, Body, Function, FunctionCall, ImpureDesignation, IntExpr, MAIN_FN_NAME, Parameter,
+    Statement, Telltale, Variable,
 };
 
 mod error;
@@ -21,6 +21,7 @@ enum Token {
 
     Identifier(String),
     Number(usize),
+    Reference,
 
     LeftParen,
     RightParen,
@@ -121,6 +122,7 @@ fn tokenize(input: &str) -> Result<Vec<Token>, TelltaleParseError> {
             '-' => Token::Minus,
             '*' => Token::Star,
             '/' => Token::Slash,
+            '&' => Token::Reference,
             _ => return Err(TelltaleParseError::UnexpectedCharacter(c)),
         };
 
@@ -128,7 +130,9 @@ fn tokenize(input: &str) -> Result<Vec<Token>, TelltaleParseError> {
     }
 
     Ok(tokens)
-}// Our tokenizer scans the source code character by character. It recognizes keywords, identifiers, integer literals, operators, punctuation, whitespace, and comments.
+}
+
+// Our tokenizer scans the source code character by character. It recognizes keywords, identifiers, integer literals, operators, punctuation, whitespace, and comments.
 // It returns a vector of tokens, which is then passed to the parser.
 
 // 3. PARSER STRUCT
@@ -170,6 +174,20 @@ impl Parser {
         match self.advance() {
             Some(Token::Identifier(name)) => Ok(name),
             _ => Err(TelltaleParseError::UnexpectedToken),
+        }
+    }
+
+    /// Allow an optional token
+    ///
+    /// If the token matches, return it, and proceed to the next token.
+    /// Returns `None` if the token did not match or there are no more
+    /// tokens left. Returns `Some` if the token matches and the parser's
+    /// state moves forward by one token.
+    fn allow(&mut self, allowed: Token) -> Option<Token> {
+        if self.peek() == Some(&allowed) {
+            self.advance()
+        } else {
+            None
         }
     }
 }
@@ -282,7 +300,7 @@ impl Parser {
     }
 
     // Parse function parameters
-    fn parse_parameters(&mut self) -> Result<Vec<Variable>, TelltaleParseError> {
+    fn parse_parameters(&mut self) -> Result<Vec<Parameter>, TelltaleParseError> {
         let mut parameters = Vec::new();
 
         // No parameters
@@ -291,10 +309,16 @@ impl Parser {
         }
 
         loop {
+            let ref_token = self.allow(Token::Reference);
             let name = self.expect_identifier()?;
 
-            parameters.push(Variable { name });
+            if ref_token.is_some() {
+                parameters.push(Parameter::Reference(Variable::new(name)));
+            } else {
+                parameters.push(Parameter::Value(Variable::new(name)));
+            }
 
+            // TODO: match right paren?
             if self.peek() != Some(&Token::Comma) {
                 break;
             }
@@ -475,14 +499,19 @@ impl Parser {
     fn parse_call_after_name(&mut self, name: String) -> Result<FunctionCall, TelltaleParseError> {
         self.expect(Token::LeftParen)?;
 
-        let mut parameters = Vec::new();
+        let mut arguments = Vec::new();
 
         // Function with no arguments
         if self.peek() != Some(&Token::RightParen) {
             loop {
-                let expr = self.parse_expression(0)?;
-
-                parameters.push(expr);
+                // check whether this argument is a reference
+                if self.allow(Token::Reference).is_some() {
+                    let variable_name = self.expect_identifier()?;
+                    arguments.push(Argument::Reference(Variable::new(variable_name)));
+                } else {
+                    let expr = self.parse_expression(0)?;
+                    arguments.push(Argument::IntExpr(expr));
+                }
 
                 if self.peek() != Some(&Token::Comma) {
                     break;
@@ -496,7 +525,7 @@ impl Parser {
 
         Ok(FunctionCall {
             function_name: name,
-            parameters,
+            arguments,
         })
     }
 }
@@ -526,6 +555,8 @@ impl TelltaleParser {
 
 #[cfg(test)]
 mod tests {
+    use telltale_core::Argument;
+
     use super::*;
 
     fn parse_ok(source: &str) -> Telltale {
@@ -674,12 +705,27 @@ mod tests {
             }",
         );
 
-        let main = program.functions.get("main").unwrap();
-
-        assert!(matches!(
-            &main.body.statements[0],
-            Statement::FunctionCall(_)
-        ));
+        let main = program
+            .functions
+            .get("main")
+            .expect("main function was not parsed");
+        assert!(
+            main.body.statements.len() == 1,
+            "main does not have exactly one statement"
+        );
+        match main.body.statements.get(0) {
+            Some(Statement::FunctionCall(function_call)) => {
+                assert_eq!(
+                    function_call,
+                    &FunctionCall {
+                        function_name: "print".to_string(),
+                        arguments: vec![Argument::IntExpr(IntExpr::Const(10))]
+                    },
+                    "function call was parsed incorrectly"
+                );
+            }
+            None | Some(_) => panic!("statement is not a function call"),
+        };
     }
 
     #[test]
@@ -695,7 +741,7 @@ mod tests {
         match &main.body.statements[0] {
             Statement::FunctionCall(call) => {
                 assert_eq!(call.function_name, "add");
-                assert_eq!(call.parameters.len(), 2);
+                assert_eq!(call.arguments.len(), 2);
             }
 
             _ => panic!("Expected function call"),
@@ -784,5 +830,102 @@ mod tests {
         let main = program.functions.get("main").unwrap();
 
         assert_eq!(main.body.statements.len(), 1);
+    }
+
+    #[test]
+    fn test_function_values() {
+        let program = parse_ok(
+            "
+            fn add(x, y) {
+                return x + y;
+            }
+
+            fn main() {
+                var x = 10;
+                add(x, x);
+            }",
+        );
+
+        let main = program
+            .functions
+            .get("main")
+            .expect("main function was not parsed");
+        let add = program
+            .functions
+            .get("add")
+            .expect("add function was not parsed");
+        match main.body.statements.get(1) {
+            Some(Statement::FunctionCall(function_call)) => {
+                assert_eq!(
+                    function_call,
+                    &FunctionCall {
+                        function_name: "add".to_string(),
+                        arguments: vec![
+                            Argument::IntExpr(IntExpr::Var(Variable::new("x"))),
+                            Argument::IntExpr(IntExpr::Var(Variable::new("x")))
+                        ]
+                    },
+                    "add function call was parsed incorrectly"
+                );
+            }
+            None | Some(_) => panic!("main body was parsed incorrectly"),
+        };
+        assert_eq!(
+            add.parameters,
+            vec![
+                Parameter::Value(Variable::new("x")),
+                Parameter::Value(Variable::new("y"))
+            ],
+            "add parameters are incorrect"
+        );
+    }
+
+    #[test]
+    fn test_function_references() {
+        let program = parse_ok(
+            "
+            fn add(&x, &y) {
+                return x + y;
+            }
+
+            fn main() {
+                var x = 10;
+                var y = 10;
+                add(&x, &y);
+            }",
+        );
+
+        let main = program
+            .functions
+            .get("main")
+            .expect("main function was not parsed");
+        let add = program
+            .functions
+            .get("add")
+            .expect("add function was not parsed");
+        match main.body.statements.get(2) {
+            Some(Statement::FunctionCall(function_call)) => {
+                assert_eq!(
+                    function_call,
+                    &FunctionCall {
+                        function_name: "add".to_string(),
+                        arguments: vec![
+                            Argument::Reference(Variable::new("x")),
+                            Argument::Reference(Variable::new("y"))
+                        ]
+                    },
+                    "add function call was parsed incorrectly"
+                );
+            }
+            None | Some(_) => panic!("main body was parsed incorrectly"),
+        };
+        assert_eq!(
+            add.parameters,
+            vec![
+                Parameter::Reference(Variable::new("x")),
+                Parameter::Reference(Variable::new("y"))
+            ],
+            "add parameters are incorrect"
+        );
     }
 }
