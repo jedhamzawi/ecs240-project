@@ -2,6 +2,8 @@
 name = "telltale-interpreter"
 version = "0.1.0"
 edition = "2024"
+description = "The interpreter for the Telltale toy programming language, a project for ECS240 at UC Davis"
+authors.workspace = true
 
 [dependencies]
 telltale-core = { workspace = true }

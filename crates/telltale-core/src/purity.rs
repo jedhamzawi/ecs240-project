@@ -41,9 +41,9 @@ impl Function {
         if let Some(missing_var) = self.impure_designation.as_ref().and_then(|designation| {
             designation.variables.iter().find(|var| {
                 // check the variable is a parameter
-                !self.parameters.iter().any(|param| param.is_variable(*var))
+                !self.parameters.iter().any(|param| param.is_variable(var))
                     // if it's not a parameter, check if it's a global
-                    && !globals.iter().any(|global| global.assigns(*var))
+                    && !globals.iter().any(|global| global.assigns(var))
             })
         }) {
             return Err(PurityError::UnknownVariable {
@@ -57,7 +57,7 @@ impl Function {
             designation.variables.iter().find(|var| {
                 self.parameters
                     .iter()
-                    .any(|param| matches!(param, Parameter::Value(_)) && param.is_variable(*var))
+                    .any(|param| matches!(param, Parameter::Value(_)) && param.is_variable(var))
             })
         }) {
             return Err(PurityError::DeclaredVariableIsValue {
@@ -84,7 +84,7 @@ impl Function {
                     .body
                     .statements
                     .iter()
-                    .any(|statement| statement.assigns_or_passes(*var))
+                    .any(|statement| statement.assigns_or_passes(var))
             })
         }) {
             return Err(PurityError::UnmodifiedVariable {
