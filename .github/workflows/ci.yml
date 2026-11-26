@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  lint:
+    name: Check & Clippy
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: cargo check
+        run: cargo check --workspace --all-targets
+
+      - name: cargo clippy
+        if: ${{ !cancelled() }}
+        run: |
+          set -o pipefail
+          cargo clippy --workspace --all-targets -- -D warnings 2>&1 | tee clippy.txt
+
+      - name: Write clippy summary
+        if: failure()
+        run: |
+          { echo '### Clippy found issues'; echo '```'; cat clippy.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+
+  build:
+    name: Build release
+    needs: lint
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: cargo build --release
+        run: cargo build --release --locked -p telltale-cli
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tt-linux-x86_64
+          path: target/release/tt
+          if-no-files-found: error
