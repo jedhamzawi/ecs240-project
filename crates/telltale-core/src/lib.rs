@@ -178,7 +178,7 @@ pub struct Function {
 // TODO: could we represent this instead as two part sequence, the first declaring
 // the variable, the second assigning it?
 #[derive(Debug, PartialEq)]
-pub struct GlobalAssignment(Variable, IntExpr);
+pub struct GlobalAssignment(pub Variable, pub IntExpr);
 
 /// A full, valid Telltale program
 #[derive(Debug, PartialEq)]
