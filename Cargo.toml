@@ -9,7 +9,6 @@ authors = [
     "Rishika Nigam <rishnigam@ucdavis.edu>",
     "Gurpreet Singh <gnosingh@ucdavis.edu>"
     ]
-description = "The Telltale toy programming language, a project for ECS240 at UC Davis"
 
 [workspace.dependencies]
 # define members of workspace and their paths here so we don't have

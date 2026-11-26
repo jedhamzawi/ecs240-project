@@ -2,6 +2,8 @@
 name = "telltale-cli"
 version = "0.1.0"
 edition = "2024"
+description = "The CLI for interacting with the Telltale toy programming language, a project for ECS240 at UC Davis"
+authors.workspace = true
 
 [[bin]]
 name = "tt"

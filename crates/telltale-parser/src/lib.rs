@@ -54,7 +54,7 @@ fn tokenize(input: &str) -> Result<Vec<Token>, TelltaleParseError> {
         if c == '/' && chars.peek() == Some(&'/') {
             chars.next();
 
-            while let Some(ch) = chars.next() {
+            for ch in chars.by_ref() {
                 if ch == '\n' {
                     break;
                 }
@@ -713,7 +713,7 @@ mod tests {
             main.body.statements.len() == 1,
             "main does not have exactly one statement"
         );
-        match main.body.statements.get(0) {
+        match main.body.statements.first() {
             Some(Statement::FunctionCall(function_call)) => {
                 assert_eq!(
                     function_call,

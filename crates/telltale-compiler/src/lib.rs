@@ -12,7 +12,7 @@ use telltale_core::Telltale;
 pub struct TelltaleCompiler {}
 
 impl TelltaleCompiler {
-    pub fn compile(&mut self, prog: &Telltale) -> String {
+    pub fn compile(&mut self, _prog: &Telltale) -> String {
         unimplemented!("Compiler is not yet implemented")
     }
 }

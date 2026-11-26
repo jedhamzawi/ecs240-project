@@ -6,7 +6,7 @@ use telltale_core::Telltale;
 pub struct TelltaleInterpreter {}
 
 impl TelltaleInterpreter {
-    pub fn interpret(&mut self, prog: &Telltale) {
+    pub fn interpret(&mut self, _prog: &Telltale) {
         unimplemented!("Interpreter is not yet implemented")
     }
 }
